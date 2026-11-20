@@ -92,7 +92,8 @@ export class Lobby extends DurableObject {
 // ・相手の手札や山札は一切持たない（持つのは公開情報の通信だけ）
 const okItem = (x) =>
   x && typeof x.n === "string" && x.n.length <= 24 && Number.isInteger(x.c) && x.c >= 0 && x.c <= 30 &&
-  Number.isInteger(x.cell) && x.cell >= -1 && x.cell < 36 && (x.tg == null || (Number.isInteger(x.tg) && x.tg >= 0 && x.tg < 36));
+  Number.isInteger(x.cell) && x.cell >= -1 && x.cell < 36 && (x.tg == null || (Number.isInteger(x.tg) && x.tg >= 0 && x.tg < 36)) &&
+  (x.fx == null || (Array.isArray(x.fx) && x.fx.length <= 10 && x.fx.every((f) => typeof f === "string" && f.length <= 20)));
 const LOG_MAX = 600;
 
 export class Room extends DurableObject {
@@ -135,7 +136,7 @@ export class Room extends DurableObject {
   async broadcast() {
     const seats = (await this.ctx.storage.get("seats")) || [null, null];
     const phase = await this.ctx.storage.get("phase");
-    const players = seats.map((p, i) => p && { side: i, name: p.name, deck: p.deck, ready: p.ready, online: this.live(p.pid).length > 0 });
+    const players = seats.map((p, i) => p && { side: i, name: p.name, deck: p.deck, ready: p.ready, rm: !!p.rm, online: this.live(p.pid).length > 0 });
     for (const w of this.ctx.getWebSockets()) {
       const a = w.deserializeAttachment() || {};
       if (a.side >= 0) send(w, { t: "state", phase, you: a.side, players });
@@ -206,15 +207,33 @@ export class Room extends DurableObject {
       const plans = (await st.get("plans")) || {};
       const row = plans[turn] || [null, null];
       if (row[me]) return; // 同じターンの再送は無視
-      row[me] = items.map((x) => ({ n: x.n, c: x.c, cell: x.cell, tg: x.tg ?? null }));
+      row[me] = items.map((x) => ({ n: x.n, c: x.c, cell: x.cell, tg: x.tg ?? null, fx: x.fx ?? [] }));
       plans[turn] = row;
       for (const k of Object.keys(plans)) if (+k < turn - 2) delete plans[k];
       await st.put("plans", plans);
       if (row[0] && row[1]) { await this.push(0, { t: "plans", turn, p: row }); await this.push(1, { t: "plans", turn, p: row }); }
       await this.touch();
-    } else if (m.t === "done" && phase === "playing") {
-      await st.put({ phase: "over", log: [[], []], plans: {} });
+    } else if (m.t === "deck" && phase === "lobby") {
+      // 対戦設定：使うデッキの変更（名前だけ。中身は送らない）。変更したら自分の準備OKは外れる
+      seats[me].deck = clean(m.deck);
+      seats[me].ready = false;
+      await st.put("seats", seats);
       await this.broadcast();
+      await this.touch();
+    } else if (m.t === "done" && phase === "playing") {
+      seats.forEach((p) => p && (p.rm = false));
+      await st.put({ phase: "over", seats, log: [[], []], plans: {} });
+      await this.broadcast();
+    } else if (m.t === "rematch" && phase === "over") {
+      // 再戦：両者が希望したら、同じ部屋の対戦設定（lobby）に戻す
+      seats[me].rm = !!m.v;
+      if (seats[0] && seats[1] && seats[0].rm && seats[1].rm) {
+        seats.forEach((p) => { p.rm = false; p.ready = false; });
+        await st.put({ phase: "lobby", seats, log: [[], []], seq: [0, 0], cseq: [0, 0], plans: {} });
+        for (const w of this.ctx.getWebSockets()) { if ((w.deserializeAttachment() || {}).side >= 0) send(w, { t: "lobby" }); }
+      } else await st.put("seats", seats);
+      await this.broadcast();
+      await this.touch();
     } else if (m.t === "leave") {
       await this.drop(ws, true);
     }
@@ -231,6 +250,15 @@ export class Room extends DurableObject {
       await st.put("seats", seats);
     } else if (explicit && phase === "playing") {
       await this.push(1 - a.side, { t: "opp_left", forfeit: true });
+    } else if (explicit && phase === "over") {
+      // 終了後に「戻る」：席を空け、相手には退室を知らせる（再戦はできなくなる）
+      seats[a.side] = null;
+      seats.forEach((p) => p && (p.rm = false));
+      await st.put("seats", seats);
+      for (const w of this.ctx.getWebSockets()) {
+        const x = w.deserializeAttachment() || {};
+        if (w !== ws && x.side >= 0) send(w, { t: "opp_left", over: true });
+      }
     }
     ws.serializeAttachment({ pid: "", side: -1 });
     try { ws.close(1000, "left"); } catch {}
