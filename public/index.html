@@ -34,7 +34,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>ボタグラフィ プロトタイプ</title>
-<link rel="stylesheet" href="style.css"></head><body><div id="ld"><div class="ld-bg"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="ld-c">
+<link rel="stylesheet" href="style.css"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;500;600;700&display=swap"></head><body><div id="ld"><div class="ld-bg"><i></i><i></i><i></i><i></i><i></i><i></i></div><div class="ld-c">
 <svg class="ld-sp" viewBox="0 0 120 140" aria-hidden="true"><defs>
 <linearGradient id="ldg1" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#2a9468"/><stop offset="1" stop-color="#8fe0b6"/></linearGradient>
 <linearGradient id="ldg2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#a8ecc6"/><stop offset="1" stop-color="#2f9a66"/></linearGradient>
@@ -52,19 +52,18 @@
 <div id="bw"><div id="board"></div><div id="ov"></div><div id="cn"></div><div id="sk0"></div><div id="sk1"></div></div>
 <div id="areas"></div><div id="gl" class="gg"></div><div id="gr" class="gg"></div><div id="sun"><i class="gl"></i><i class="ry"></i><i class="ob" style="left:76%;top:9%;width:46px;height:46px;--d:11s;--t:-3s"></i><i class="ob rg" style="left:64%;top:22%;width:108px;height:108px;--d:15s;--t:-7s"></i><i class="ob" style="left:53%;top:35%;width:30px;height:30px;--d:9s;--t:-1s"></i><i class="ob" style="left:41%;top:52%;width:80px;height:80px;--d:13s;--t:-5s"></i><i class="ob rg" style="left:26%;top:64%;width:140px;height:140px;--d:17s;--t:-9s"></i><i class="ob" style="left:86%;top:36%;width:24px;height:24px;--d:10s;--t:-4s"></i></div></section>
 <div id="mana" style="display:none"></div>
-<div id="hand"></div>
+<div id="hand" class="im"></div>
 <div id="drop"><div class="dp"><span id="dn">0</span></div></div><button id="cc" disabled>Cancel</button><button class="go" id="go">Confirm</button>
 <div id="end"></div>
-</main><div id="bt"><span>Battle</span></div><div id="tb"></div><div id="pp"></div><div id="res"></div><div id="info"></div><div id="finfo"></div><div id="bdt"></div><div id="hmd" class="md"><button data-hm="t" title="手札: テキストモード" class="on">📝</button><button data-hm="i" title="手札: イラストモード">🖼️</button></div>
+</main><div id="bt"><span>Battle</span></div><div id="tb"></div><div id="pp"></div><div id="res"></div><div id="info"></div><div id="finfo"></div><div id="bdt"></div><div id="hmd" class="md"><button data-hm="t" title="手札: テキストモード">📝</button><button data-hm="i" title="手札: イラストモード" class="on">🖼️</button></div>
 <div id="home"><div class="waves"><i></i><i></i><i></i><i></i><i></i></div><div class="hmwall"><i></i><i></i></div><div id="hprof"><div class="av"></div><div class="tx"><b></b><span></span></div><button id="hpset" title="設定">⚙</button></div><div id="hcoin" class="cbadge"><i class="coin">B</i><b class="cb-n">0</b><span>ボタコイン</span></div><h1>ボタグラフィ</h1><p>BOTAGRAPHY</p>
 <div class="hmstage"><div class="hmgrid"><div class="hmcards" id="hmcards"></div><div class="hmmain" id="hmmain"></div><button class="hmb" id="hbD"><b class="hbi"><i>🎴</i><span>Cards</span></b></button><button class="hmb" id="hbB"><b class="hbi"><i>⚔️</i><span>Battle</span></b></button><button class="hmb" id="hbS"><b class="hbi"><i>🛒</i><span>Shop</span></b></button></div></div><div id="hmdt"></div></div>
 <div id="bset"><div class="waves"><i></i><i></i><i></i><i></i><i></i></div><header><button id="bsbk" class="bsb">← 戻る</button><h2>バトル</h2><span></span></header>
 <div class="bscs"><div class="bsc" id="bsc1"><div class="bsi"><div class="bsf bsfr"><i>🌱</i><b>ソロ</b><span>CPUと対戦</span></div><div class="bsf bsbk"><i>🎲</i><b>ランダム</b><span>世界のだれかと対戦</span></div></div></div>
-<div class="bsc" id="bsc2"><div class="bsi"><div class="bsf bsfr"><i>🌐</i><b>オンライン</b><span>ほかのプレイヤーと対戦</span></div><div class="bsf bsbk"><i>🔑</i><b>ルーム</b><span>合言葉で友だちと対戦</span></div></div></div></div>
-<label class="bsnm">プレイヤー名<input id="bsnm" maxlength="12" autocomplete="off"></label></div>
+<div class="bsc" id="bsc2"><div class="bsi"><div class="bsf bsfr"><i>🌐</i><b>オンライン</b><span>ほかのプレイヤーと対戦</span></div><div class="bsf bsbk"><i>🔑</i><b>ルーム</b><span>合言葉で友だちと対戦</span></div></div></div></div></div>
 <div id="onl"><div id="obox"></div></div>
 <div id="dkb"><div class="waves"><i></i><i></i><i></i><i></i><i></i></div><header><button id="dkbk">← 戻る</button><h2>デッキ構築</h2><span class="dkhint">クリック：詳細　／　長押し：入れる・抜く</span><span class="md dkmd"><button data-l="t" class="on" title="一覧：テキストあり">📝</button><button data-l="i" title="一覧：テキストなし（イラストのみ）">🖼️</button></span></header>
 <div class="dkbody"><div id="dkt"></div><div id="dkl"><div class="dkrow"><button id="dkdel" title="削除">🗑️</button><span id="dkc"></span><input id="dkname" maxlength="12" placeholder="デッキ名"><button id="dkact"></button></div>
-<div id="dkcv"><div id="dkavg"></div><div id="dkcurve"></div></div><div id="dkm"></div><div id="dkdk"></div></div>
+<div id="dkcv"><div id="dkavg"></div></div><div id="dkm"></div><div id="dkdk"></div></div>
 <div id="dkr"><div id="dksr"><input id="dksearch" placeholder="🔍 検索：名前・コスト・パワー・種類・属性・テキスト（スペースで複数）" autocomplete="off"><button id="dksx" title="クリア">✕</button></div><div id="dkg"></div></div></div><div id="dkdt"></div></div>
-<script src="game.js"></script></body></html>
+<script src="js/01-cards.js"></script><script src="js/02-battle.js"></script><script src="js/03-art-detail.js"></script><script src="js/04-home-deck.js"></script><script src="js/05-profile.js"></script><script src="js/06-online.js"></script><script src="js/07-growth-data.js"></script><script src="js/08-fx-engine.js"></script><script src="js/09-growth-ui.js"></script></body></html>
