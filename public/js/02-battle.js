@@ -240,6 +240,7 @@ document.addEventListener("mouseover",e=>{
   if(c)showCard(c,p);
   else info.classList.remove("on");
 });
+const HPOS=new WeakMap();/* 手札の前回位置（増減時に滑らかに動かすため） */
 function render(){
   $("board").classList.toggle("sel",S.sel!==null);$("board").style.setProperty("--pv",S.sel!==null&&S.hand[0][S.sel]?'"'+S.hand[0][S.sel].e+'"':'""');$("board").style.setProperty("--pi",S.sel!==null&&S.hand[0][S.sel]&&ART[S.hand[0][S.sel].n]?"var(--i-"+ART[S.hand[0][S.sel].n]+")":"none");$("turn").textContent=`ターン ${S.turn} / ${S.max}　先に${S.win}点　`;
   $("p0").textContent="あなた "+S.pts[0];$("p1").textContent=OPN()+" "+S.pts[1];
@@ -260,7 +261,7 @@ function render(){
   const dis=S.over||S.busy||!!S.pk;
   const hn=S.hand[0].length,stp=hn>1?Math.min([0,0,142,126,116,108,102,96][hn]||96,780/(hn-1)):0;
   const D=c=>c.c>left()||dis||(isAct(c)&&!actT(0,c).length),prevD=new Set(DIS);DIS.clear();S.hand[0].forEach(c=>{if(D(c))DIS.add(c)});
-  $("hand").innerHTML=S.hand[0].map((c,i)=>{const m=i-(hn-1)/2;return`<button class="card${ART[c.n]?" ill ac-"+ART[c.n]:""}${S.sel===i?" on":""}${S.pk&&S.pk.hand&&S.pk.hand.includes(i)?" pk":""}${c.nw&&Date.now()-c.nw<1800?" nw":""}" data-h="${i}" style="--x:${(m*stp).toFixed(1)}px;--y:${(m*m*2.4).toFixed(1)}px;--r:${(m*4).toFixed(1)}deg;z-index:${i};animation-delay:${(i*.09-(c.nw?(Date.now()-c.nw)/1000:0)).toFixed(2)}s;--ac:${c.d==="f"?"#f4a6c0":"#8ccf9c"}" ${DIS.has(c)?(prevD.has(c)?"data-dis":"data-dis data-fd"):""}><b>${c.c}</b><i class="em">${c.e}</i><em>${c.n}</em><span class="tx"><span>${c.t}</span></span><small>${c.p==null?"✦":c.p}</small></button>`}).join("");
+  $("hand").innerHTML=S.hand[0].map((c,i)=>{const m=i-(hn-1)/2,hx=m*stp,hy=m*m*2.4,hr=m*4,pv=HPOS.get(c),mv=pv&&!(c.nw&&Date.now()-c.nw<1800)&&(Math.abs(pv.x-hx)>.5||Math.abs(pv.y-hy)>.5||Math.abs(pv.r-hr)>.3);HPOS.set(c,{x:hx,y:hy,r:hr});return`<button class="card${ART[c.n]?" ill ac-"+ART[c.n]:""}${mv?" mv":""}${S.sel===i?" on":""}${S.pk&&S.pk.hand&&S.pk.hand.includes(i)?" pk":""}${c.nw&&Date.now()-c.nw<1800?" nw":""}" data-h="${i}" style="${mv?`--x0:${pv.x.toFixed(1)}px;--y0:${pv.y.toFixed(1)}px;--r0:${pv.r.toFixed(1)}deg;`:""}--x:${(m*stp).toFixed(1)}px;--y:${(m*m*2.4).toFixed(1)}px;--r:${(m*4).toFixed(1)}deg;z-index:${i};animation-delay:${(i*.09-(c.nw?(Date.now()-c.nw)/1000:0)).toFixed(2)}s;--ac:${c.d==="f"?"#f4a6c0":"#8ccf9c"}" ${DIS.has(c)?(prevD.has(c)?"data-dis":"data-dis data-fd"):""}><b>${c.c}</b><i class="em">${c.e}</i><em>${c.n}</em><span class="tx"><span>${c.t}</span></span><small>${c.p==null?"✦":c.p}</small></button>`}).join("");
   if(S.fx&&!S.fx.fd){S.fx.fd=1;if(S.fx.k==="drop")windAt(S.fx.cell);else if(S.fx.k==="clash"&&/⚔/.test(S.fx.txt))clashAt(S.fx.cell)}
   $("end").textContent="";
   $("sk0").innerHTML=skh(S.stk?S.stk[0]:S.st,0);$("sk1").innerHTML=skh(S.stk?S.stk[1]:[],1);
@@ -340,5 +341,5 @@ document.addEventListener("click",e=>{
 addEventListener("keydown",e=>{if(e.key==="Escape")$("bdt").classList.remove("on")});
 document.addEventListener("click",e=>{const b=e.target.closest("#hmd button[data-hm]");if(!b)return;$("hand").classList.toggle("im",b.dataset.hm==="i");document.querySelectorAll("#hmd button").forEach(x=>x.classList.toggle("on",x===b))});
 /* 盤面アイコンのライト: 一度マウスオーバーしたら、外しても最後まで流れる */
-document.addEventListener("mouseover",e=>{const c=e.target.closest&&e.target.closest("#board .cell");if(!c)return;const j=c.querySelector(".ej.ic");if(!j||j.classList.contains("shn"))return;j.classList.add("shn");if(!j._sh){j._sh=1;j.addEventListener("animationend",ev=>{if(ev.animationName==="icsh")j.classList.remove("shn")})}});
+document.addEventListener("mouseover",e=>{const c=e.target.closest&&e.target.closest("#board .cell");if(!c)return;const j=c.querySelector(".ej.ic");if(!j||j.classList.contains("ics"))return;j.classList.add("ics");if(!j._sh){j._sh=1;j.addEventListener("animationend",ev=>{if(ev.animationName==="icsh")j.classList.remove("ics")})}});
 setInterval(()=>{const c=$("cn");c.classList.add("sw");setTimeout(()=>c.classList.remove("sw"),3200)},30000);
