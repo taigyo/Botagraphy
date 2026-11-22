@@ -38,10 +38,12 @@ function dkRender(){
   const g=document.createElement("div");g.className="dkgrid3";g.style.marginTop="8px";
   for(let i=0;i<12;i++){if(D.k[i]){g.appendChild(cardEl(byN(D.k[i])))}else g.appendChild(emptyEl("＋"))}
   L.appendChild(g);
-  let sum=0;dkCards(D).forEach(([x,m])=>{sum+=x.c*m});
-  $("dkavg").textContent=`平均コスト ${n?(sum/n).toFixed(1):"-"}`;
+  const cv={};let sum=0;dkCards(D).forEach(([x,m])=>{cv[x.c]=(cv[x.c]||0)+m;sum+=x.c*m});
+  const mx=Math.max(1,...Object.values(cv)),top=Math.max(7,...Object.keys(cv).map(Number));let h="";
+  for(let i=0;i<=top;i++){const v=cv[i]||0;h+=`<div class="dkcol"><span>${v||""}</span><i style="height:${v/mx*52}px"></i><em>${i}</em></div>`}
+  $("dkcurve").innerHTML=h;$("dkavg").textContent=`平均コスト ${n?(sum/n).toFixed(1):"-"}`;
   const R=$("dkg"),st=R.scrollTop;R.innerHTML="";HITS=0;
-  [["メイン",MAINS],["通常カード（1種につき2枚）",NORM],["トークン",TOKS]].forEach(([t,a])=>{const hh=document.createElement("h3");hh.textContent=t;if(t==="メイン")hh.dataset.t="メイン";R.appendChild(hh);const gg=document.createElement("div");gg.className="dkgr";
+  [["メイン",MAINS],["通常カード",NORM],["トークン",TOKS]].forEach(([t,a])=>{const hh=document.createElement("h3");hh.textContent=t;if(t==="メイン")hh.dataset.t="メイン";R.appendChild(hh);const gg=document.createElement("div");gg.className="dkgr";
     a.filter(dkMatch).forEach(c=>{HITS++;const e=cardEl(c);if(c.n===D.main||D.k.includes(c.n)){e.classList.add("in");e.insertAdjacentHTML("beforeend",'<b class="dkok">✓</b>')}gg.appendChild(e)});if(!gg.childElementCount)hh.remove();else R.appendChild(gg)});if(!HITS){const p=document.createElement("p");p.className="dkno";p.textContent="該当するカードがありません";R.appendChild(p)}
   R.scrollTop=st}
 const dkCards=D=>[...(D.main?[[byN(D.main),1]]:[]),...D.k.map(n=>[byN(n),2])];

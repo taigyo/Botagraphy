@@ -228,7 +228,9 @@ $("go").onclick=commit;$("cc").onclick=()=>{if(S.busy||S.over||!S.st.length)retu
 $("sk0").onclick=e=>{const t=e.target.closest("[data-k]");if(!t||S.busy||S.over||S.pk)return;const k=+t.dataset.k,s=S.st[k];if(!s)return;S.hand[0].splice(Math.min(s.h,S.hand[0].length),0,s.card);S.st.splice(k,1);S.sel=null;render()};$("rs").onclick=init;$("win").onchange=init;$("dk").onchange=init;
 const info=$("info"),INFO=info,finfo=$("finfo"),IC={f:"#f4a6c0",t:"#8ccf9c"};
 const PF='<svg class="pf" width="242" height="334" viewBox="0 0 242 334"><defs><linearGradient id="pfg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset=".5" stop-color="#fff6c0"/><stop offset="1" stop-color="#f2b020"/></linearGradient></defs><rect x="1.5" y="1.5" width="239" height="331" rx="20" pathLength="1"/></svg>';
-const showCard=(c,p,F)=>{const info=F?finfo:INFO;if(F){finfo._c=c;finfo._p=p}else clearTimeout(unpin.t);info.classList.remove("un");info.classList.toggle("pin",!F&&PIN===c);info.style.setProperty("--ac",IC[c.d]);info.innerHTML=ibHTML(c,p,false);fitPF(info);info.classList.add("on");tiltKick()};
+/* 詳細（左：自分側 / 右：相手側）は画面端でなく、盤面のすぐ隣に出す */
+const placeInfo=(el,right)=>{const r=$("board").getBoundingClientRect(),w=232,g=66;el.style.left=(right?Math.min(innerWidth-w-8,r.right+g):Math.max(8,r.left-w-g))+"px";if(right)el.style.right="auto"};
+const showCard=(c,p,F)=>{const info=F?finfo:INFO;if(F){finfo._c=c;finfo._p=p}else clearTimeout(unpin.t);info.classList.remove("un");info.classList.toggle("pin",!F&&PIN===c);info.style.setProperty("--ac",IC[c.d]);info.innerHTML=ibHTML(c,p,false);placeInfo(info,!!F);fitPF(info);info.classList.add("on");tiltKick()};
 function setMana(m){const d=$("drop"),n=$("dn");if(d.dataset.v===String(m))return;const first=d.dataset.v===undefined;d.dataset.v=m;if(first){n.textContent=m;return}
   n.style.opacity=0;setTimeout(()=>{n.textContent=m;n.style.opacity=1;jig(1)},110)}
 ["contextmenu","dragstart","selectstart"].forEach(t=>document.addEventListener(t,e=>{if(!e.target.closest||!e.target.closest("input,select"))e.preventDefault()}));

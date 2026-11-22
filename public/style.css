@@ -1371,3 +1371,40 @@ body:has(#hmdt.on) #home>:not(#hmdt),body:has(#dkdt.on) #dkb>:not(#dkdt),body:ha
 .rd-lm i{font-style:normal;font-size:15px;line-height:1;letter-spacing:.06em;opacity:.78}
 .rd-lm b{font-family:var(--serif);font-size:23px;font-weight:700;line-height:1.05}
 .rd-gr:hover .rd-lm{transform:rotate(-8deg) scale(1.08);box-shadow:0 0 0 1px rgba(200,162,76,.8),0 7px 14px rgba(160,120,40,.4);transition-duration:.4s}
+
+/* ホバーの光の筋：入るときだけ左→右に流れる（外したときは戻さない） */
+.rd-gr::before,.rg-btn::before,.go::after{transition:none}
+.rd-gr:hover::before,.rg-btn:hover:not(:disabled)::before{transition:left .6s}
+/* カードのテキストは明朝体（serif） */
+.card,.card *,.dkc,.dkc *,.ib,.ib *,.rd-sheet,.rd-sheet *,#info,#info *{font-family:var(--ff)}
+/* 「配置」「使用」のバッジを少し大きく */
+.bd{font-size:.92em}
+.ib .tx .bd,.ib .mn .bd{font-size:1.04em}
+/* 小カード：エフェクトは絵の上、白い背景・テキストの下 */
+.card.ill::after,.dkc.hc.ill::after{z-index:1}
+.card>.fxo,.dkc>.fxo{z-index:0}
+/* 詳細：成長ボタンのレベルは枠・背景なし */
+.rd-lm{width:auto;height:auto;margin:0;flex-direction:row;align-items:baseline;gap:5px;background:none;box-shadow:none;border-radius:0;color:#4a5e3f}
+.rd-lm::before{display:none}
+.rd-lm i{font-size:15px;opacity:.7}
+.rd-lm b{font-size:24px}
+.rd-gr:hover .rd-lm{transform:none;box-shadow:none}
+.rd-gr{padding:9px 22px 9px 22px}
+/* デッキ構築 */
+.dkbody{padding:0 28px;box-sizing:border-box}
+#dkb header{padding-left:28px;padding-right:28px}
+.dkmain{margin-bottom:16px}
+#dkg .dkgr{grid-template-columns:repeat(auto-fill,186px);gap:20px 16px}
+#dkg .dkc.hc{zoom:1.5}
+/* 成長画面：装着中が増えてもカードの位置は動かさない */
+.rg-dock{height:156px}
+.rg-ei{height:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:18px 26px}
+
+/* バトル：互いのポイント数を少し内側へ */
+#gl{left:84px}#gr{right:84px}
+/* ターン終了時のエリア判定の数字は、盤面カードのパワーより手前 */
+#ov{z-index:12}
+/* 手札・一覧・詳細：白い背景の角に隙間が出ないよう、内側の角丸に合わせる */
+.card.ill::after{border-radius:0 0 8px 8px}
+.dkc.hc.ill::after{border-radius:0 0 10px 10px}
+.ib.ill{background:linear-gradient(180deg,#9dc5df 0,#9dc5df 50%,#eef5f8 100%)}
