@@ -1408,3 +1408,87 @@ body:has(#hmdt.on) #home>:not(#hmdt),body:has(#dkdt.on) #dkb>:not(#dkdt),body:ha
 .card.ill::after{border-radius:0 0 8px 8px}
 .dkc.hc.ill::after{border-radius:0 0 10px 10px}
 .ib.ill{background:linear-gradient(180deg,#9dc5df 0,#9dc5df 50%,#eef5f8 100%)}
+
+/* ===== 新カード14種：イラスト ===== */
+.al-iv-bg{background-image:url(img/al-iv-bg-5d48f6.webp)}
+.al-iv-sub{background-image:url(img/al-iv-sub-e0ea41.webp)}
+.al-iv-main{background-image:url(img/al-iv-main-fb1ba6.webp)}
+.al-iv-sub2{background-image:url(img/al-iv-sub2-0b779a.webp)}
+.al-nt-bg{background-image:url(img/al-nt-bg-c514c4.webp)}
+.al-nt-main{background-image:url(img/al-nt-main-884f1e.webp)}
+.al-nt-sub{background-image:url(img/al-nt-sub-0f328b.webp)}
+.al-fj-bg{background-image:url(img/al-fj-bg-d5f8c2.webp)}
+.al-fj-sub{background-image:url(img/al-fj-sub-39ea6f.webp)}
+.al-fj-main{background-image:url(img/al-fj-main-d9cc01.webp)}
+.al-fj-sub2{background-image:url(img/al-fj-sub2-13b408.webp)}
+.al-en-bg{background-image:url(img/al-en-bg-1e866b.webp)}
+.al-en-sub{background-image:url(img/al-en-sub-d644fc.webp)}
+.al-en-main{background-image:url(img/al-en-main-682392.webp)}
+.al-ag-bg{background-image:url(img/al-ag-bg-549017.webp)}
+.al-ag-main{background-image:url(img/al-ag-main-634882.webp)}
+.al-ag-sub{background-image:url(img/al-ag-sub-3ae07a.webp)}
+.al-kt-bg{background-image:url(img/al-kt-bg-09f60a.webp)}
+.al-kt-main{background-image:url(img/al-kt-main-df7dfc.webp)}
+.al-kt-sub{background-image:url(img/al-kt-sub-3507d1.webp)}
+.al-mn-bg{background-image:url(img/al-mn-bg-75fc58.webp)}
+.al-mn-main{background-image:url(img/al-mn-main-36596d.webp)}
+.al-mn-sub{background-image:url(img/al-mn-sub-273194.webp)}
+.al-cl-bg{background-image:url(img/al-cl-bg-aa0164.webp)}
+.al-cl-main{background-image:url(img/al-cl-main-37624d.webp)}
+.al-cl-sub{background-image:url(img/al-cl-sub-0ca379.webp)}
+.al-cl-sub2{background-image:url(img/al-cl-sub2-37c824.webp)}
+.al-ig-bg{background-image:url(img/al-ig-bg-d24801.webp)}
+.al-ig-main{background-image:url(img/al-ig-main-757fbc.webp)}
+.al-ig-sub{background-image:url(img/al-ig-sub-38af4e.webp)}
+.al-tn-bg{background-image:url(img/al-tn-bg-3881d5.webp)}
+.al-tn-main{background-image:url(img/al-tn-main-d66945.webp)}
+.al-tn-sub{background-image:url(img/al-tn-sub-2d2c88.webp)}
+.al-tn-sub2{background-image:url(img/al-tn-sub2-c00d01.webp)}
+.al-sr-bg{background-image:url(img/al-sr-bg-99af12.webp)}
+.al-sr-main{background-image:url(img/al-sr-main-1a839c.webp)}
+.al-sr-sub{background-image:url(img/al-sr-sub-fc483a.webp)}
+.al-dm-bg{background-image:url(img/al-dm-bg-f37cd5.webp)}
+.al-dm-main{background-image:url(img/al-dm-main-a33692.webp)}
+.al-dm-sub{background-image:url(img/al-dm-sub-b57beb.webp)}
+.al-kz-bg{background-image:url(img/al-kz-bg-a08ff6.webp)}
+.al-kz-main{background-image:url(img/al-kz-main-b42c19.webp)}
+.al-kz-sub{background-image:url(img/al-kz-sub-af8bd7.webp)}
+.al-kz-sub2{background-image:url(img/al-kz-sub2-9cb95f.webp)}
+.al-kz-sub3{background-image:url(img/al-kz-sub3-ed6b52.webp)}
+.al-tr-bg{background-image:url(img/al-tr-bg-9f43bc.webp)}
+.al-tr-main{background-image:url(img/al-tr-main-5f8f79.webp)}
+.al-tr-sub{background-image:url(img/al-tr-sub-35847e.webp)}
+:root{--i-iv:url(img/i-iv-9d9b81.webp);--i-nt:url(img/i-nt-f12cb9.webp);--i-fj:url(img/i-fj-ff18ea.webp);--i-en:url(img/i-en-737948.webp);--i-ag:url(img/i-ag-f44785.webp);--i-kt:url(img/i-kt-a953bd.webp);--i-mn:url(img/i-mn-6f9cc8.webp);--i-cl:url(img/i-cl-778012.webp);--i-ig:url(img/i-ig-3d7b61.webp);--i-tn:url(img/i-tn-e0c8eb.webp);--i-sr:url(img/i-sr-2d93f6.webp);--i-dm:url(img/i-dm-9f14a6.webp);--i-kz:url(img/i-kz-b53c66.webp);--i-tr:url(img/i-tr-4228f3.webp)}
+.ic-iv{--ic:var(--i-iv)}
+.ic-nt{--ic:var(--i-nt)}
+.ic-fj{--ic:var(--i-fj)}
+.ic-en{--ic:var(--i-en)}
+.ic-ag{--ic:var(--i-ag)}
+.ic-kt{--ic:var(--i-kt)}
+.ic-mn{--ic:var(--i-mn)}
+.ic-cl{--ic:var(--i-cl)}
+.ic-ig{--ic:var(--i-ig)}
+.ic-tn{--ic:var(--i-tn)}
+.ic-sr{--ic:var(--i-sr)}
+.ic-dm{--ic:var(--i-dm)}
+.ic-kz{--ic:var(--i-kz)}
+.ic-tr{--ic:var(--i-tr)}
+.card.ill.ac-iv,.dkc.ill.ac-iv,.card.ill.ac-nt,.dkc.ill.ac-nt,.card.ill.ac-fj,.dkc.ill.ac-fj,.card.ill.ac-en,.dkc.ill.ac-en,.card.ill.ac-ag,.dkc.ill.ac-ag,.card.ill.ac-kt,.dkc.ill.ac-kt,.card.ill.ac-mn,.dkc.ill.ac-mn,.card.ill.ac-cl,.dkc.ill.ac-cl,.card.ill.ac-ig,.dkc.ill.ac-ig,.card.ill.ac-tn,.dkc.ill.ac-tn,.card.ill.ac-sr,.dkc.ill.ac-sr,.card.ill.ac-dm,.dkc.ill.ac-dm,.card.ill.ac-kz,.dkc.ill.ac-kz,.card.ill.ac-tr,.dkc.ill.ac-tr{background-size:auto calc(var(--cvk)*100%)}
+/* 果物タイプのラベル */
+.dty i[data-t="果物"],.ib .at i[data-t="果物"]{color:#6a4a8a;background:linear-gradient(160deg,#f3e9fc,#dcc8f2)}
+.rd-ty i[data-t="果物"]{color:#5f4380;background:linear-gradient(160deg,#f1e6fa,#d6c0ee)}
+/* 新カード14種：合成画像 */
+.card.ill.ac-iv,.dkc.ill.ac-iv{background-image:url(img/card-ill-ac-iv-aa6076.webp)}
+.card.ill.ac-nt,.dkc.ill.ac-nt{background-image:url(img/card-ill-ac-nt-6aab77.webp)}
+.card.ill.ac-fj,.dkc.ill.ac-fj{background-image:url(img/card-ill-ac-fj-0246ed.webp)}
+.card.ill.ac-en,.dkc.ill.ac-en{background-image:url(img/card-ill-ac-en-7305c5.webp)}
+.card.ill.ac-ag,.dkc.ill.ac-ag{background-image:url(img/card-ill-ac-ag-6d0d0b.webp)}
+.card.ill.ac-kt,.dkc.ill.ac-kt{background-image:url(img/card-ill-ac-kt-50dda5.webp)}
+.card.ill.ac-mn,.dkc.ill.ac-mn{background-image:url(img/card-ill-ac-mn-d0accc.webp)}
+.card.ill.ac-cl,.dkc.ill.ac-cl{background-image:url(img/card-ill-ac-cl-a58810.webp)}
+.card.ill.ac-ig,.dkc.ill.ac-ig{background-image:url(img/card-ill-ac-ig-87536f.webp)}
+.card.ill.ac-tn,.dkc.ill.ac-tn{background-image:url(img/card-ill-ac-tn-3854c9.webp)}
+.card.ill.ac-sr,.dkc.ill.ac-sr{background-image:url(img/card-ill-ac-sr-574e27.webp)}
+.card.ill.ac-dm,.dkc.ill.ac-dm{background-image:url(img/card-ill-ac-dm-83f155.webp)}
+.card.ill.ac-kz,.dkc.ill.ac-kz{background-image:url(img/card-ill-ac-kz-ac29bb.webp)}
+.card.ill.ac-tr,.dkc.ill.ac-tr{background-image:url(img/card-ill-ac-tr-429aeb.webp)}

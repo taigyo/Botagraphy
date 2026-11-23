@@ -109,16 +109,18 @@ async function mulligan(){
 }
 const sweep=async()=>{const d=[];S.board.forEach((b,i)=>{if(b&&pw(b,i)<=0)d.push(i)});if(!d.length)return;d.forEach(i=>{const el=document.querySelector(`#board [data-i="${i}"] .cd`);if(el)el.classList.add("fo")});await sleep(700);await rm(d)};
 const rm=async(ix,gs)=>{ix=ix.filter(i=>S.board[i]);if(!ix.length)return[];
- const g=gs||guardSet(),tr=[];
- ix.forEach(i=>adj(i).forEach(j=>{const x=S.board[j];if(x&&!ix.includes(j)&&x.card.f.some(f=>f.w==="x"&&f.on(j)))tr.push([x,j])}));
- ix.forEach(i=>{const b=S.board[i];S.board[i]=null;if(g[b.o]&&b.card.a.includes("木")){const c={...b.card,c:Math.max(0,b.card.c-1)};if(S.hand[b.o].length<7){c.nw=Date.now();S.hand[b.o].push(c)}else if(b.o===0)setTimeout(()=>vanish2(c),600)}else(S.yard||(S.yard=[[],[]]))[b.o].push(b.card)});
- render();for(const[x,j]of tr)if(S.board[j]===x)await fire(x,j,{s:"+1マナ",k:"up",run:()=>{gm(x.o,1)}});return ix};
+ const g=gs||guardSet(),tr=[],dd=[];
+ ix.forEach(i=>adj(i).forEach(j=>{const x=S.board[j];if(x&&!ix.includes(j))for(const f of x.card.f)if(f.w==="x"&&f.on(j,i))tr.push([x,j,f,i])}));
+ ix.forEach(i=>{const b=S.board[i];S.board[i]=null;if(g[b.o]&&b.card.a.includes("木")){const c={...b.card,c:Math.max(0,b.card.c-1)};if(S.hand[b.o].length<7){c.nw=Date.now();S.hand[b.o].push(c)}else if(b.o===0)setTimeout(()=>vanish2(c),600)}else{(S.yard||(S.yard=[[],[]]))[b.o].push(b.card);for(const f of b.card.f)if(f.w==="d")dd.push([b,i,f])}});
+ render();for(const[x,j,f,i]of tr)if(S.board[j]===x)await fire(x,j,f.run?{s:f.s,k:f.k||"up",run:(b,jj)=>f.run(b,jj,i)}:{s:"+1マナ",k:"up",run:()=>{gm(x.o,1)}});
+ for(const[b,i,f]of dd)await fire(b,i,{s:f.s,k:f.k||"up",run:()=>f.run(b)});return ix};
 const isAct=c=>!!c&&c.a.includes("アクション");
 const pick=(o,{cells,hand,msg,cancel})=>new Promise(res=>{const L=cells||hand,sync=NET.on&&S.busy;if(o===1){if(sync)return netWait("choice").then(res);return res(L[rnd(L.length)])}S.pk={cells,hand,res:sync?v=>{netSend({k:"ch",v});res(v)}:res,cancel};$("pp").textContent=msg;$("pp").classList.add("on");render()});
 document.addEventListener("click",e=>{if(!S.pk)return;if(JD){e.stopPropagation();return}const c=e.target.closest("#board [data-i]"),h=e.target.closest("[data-h]");let v=null;
   if(c&&S.pk.cells&&S.pk.cells.includes(+c.dataset.i))v=+c.dataset.i;else if(h&&S.pk.hand&&S.pk.hand.includes(+h.dataset.h))v=+h.dataset.h;
   if(v===null){if(!S.pk.cancel)return;v=-1}e.stopPropagation();const t=c||h;if(v>=0&&t){const q=t.getBoundingClientRect(),p=document.createElement("i");p.className="rp";p.style.left=q.left+q.width/2+"px";p.style.top=q.top+q.height/2+"px";document.body.appendChild(p);setTimeout(()=>p.remove(),800)}const r=S.pk.res;S.pk=null;$("pp").classList.remove("on");render();r(v)},true);
-const useAct=async s=>{const f=s.card.f.find(x=>x.w==="a");if(!f||!f.cells(s.o).length)return;S.eff=1;showCard(s.card,null,1);castAt(s.o);S.fx=null;render();await sleep(1300);await f.use(s.o,await pick(s.o,{cells:f.cells(s.o),msg:f.msg}));await mq();S.fx=null;render();await sweep()};
+const useAct=async s=>{const f=s.card.f.find(x=>x.w==="a");if(!f||!f.cells(s.o).length)return;S.eff=1;showCard(s.card,null,1);castAt(s.o);S.fx=null;render();await sleep(1300);await f.use(s.o,await pick(s.o,{cells:f.cells(s.o),msg:f.msg}));await drainQ();await mq();S.fx=null;render();await sweep()};
+const drainQ=async()=>{if(S.pd||!S.q)return;while(S.q.length){const c=S.q.shift();if(S.board[c])await onPlace(c)}};
 const fire=async(b,i,f)=>{
   if(f.off)return;const T=f.tg?f.tg(b,i):[];if(f.tg&&!T.length)return;let hv;
   if(f.hvf){if(NET.on&&b.o===1)hv=await netWait("out");else{hv=f.hvf(b,i);if(NET.on)netSend({k:"out",v:hv})}if(!hv)return}else if(f.ok&&!f.ok(b,i))return;
@@ -129,20 +131,20 @@ const fire=async(b,i,f)=>{
     for(const st of f.steps){let r;
       if(st.s){S.fx={cell:i,k:"clash",c:cc(st.s,st.k),txt:st.s};render();await sleep(1000)}
       r=await st.run(b,i,T);await mq();S.fx=null;render();if(st.hl)hl(st.k);await sleep(st.hl?800:300);if(r===false)break}
-    await sleep(300);await sweep();return}
+    await sleep(300);await sweep();await drainQ();return}
   S.fx={cell:i,k:"clash",c:cc(f.s,f.k),txt:f.s};render();await sleep(1100);
-  await f.run(b,i,T,hv);await mq();S.fx=null;render();hl(f.k);await sleep(900);await sweep()};
-const onPlace=async cell=>{
-  const nb=S.board[cell];
+  await f.run(b,i,T,hv);await mq();S.fx=null;render();hl(f.k);await sleep(900);await sweep();await drainQ()};
+const onPlace=async cell=>{S.pd=(S.pd||0)+1;try{
+  const nb=S.board[cell];if(!nb)return;
   for(let j=0;j<36;j++){const sb=S.board[j];if(!sb||sb===nb)continue;
-    for(const f of sb.card.f)if(f.w==="t"&&f.on(sb,j,nb,cell))await fire(sb,j,f.run?{s:f.s,k:"up",run:()=>f.run(sb)}:{s:"+"+f.n,k:"up",tg:()=>[cell],run:()=>{nb.bonus=(nb.bonus||0)+f.n}})}
+    for(const f of sb.card.f)if(f.w==="t"&&f.on(sb,j,nb,cell))await fire(sb,j,f.run?{...f,k:f.k||"up",run:(b2,i2,T2,hv)=>f.run(sb,j,nb,cell,hv)}:{s:"+"+f.n,k:"up",tg:()=>[cell],run:()=>{gb(cell,f.n)}})}
   for(const f of nb.card.f)if(f.w==="p")await fire(nb,cell,f);
-  while(S.q.length)await onPlace(S.q.shift())};
+  while(S.q.length){const c=S.q.shift();if(S.board[c])await onPlace(c)}}finally{S.pd--}};
 async function commit(){
   if(S.over||S.busy)return;
-  S.busy=true;S.mg=[0,0];render();
+  S.busy=true;S.mg=[0,0];S.ppl=[];render();
   const all=[...S.st.map(s=>({...s,o:0})),...(NET.on?await netPlans():cpu()).map(s=>({...s,o:1}))];
-  S.st=[];if(NET.on)NET.pr=mul(NET.seed^Math.imul(S.turn+1,0x9E3779B1));all.forEach(s=>{S.mana[s.o]-=s.card.c;S.hide.add(s.cell)});
+  S.st=[];if(NET.on)NET.pr=mul(NET.seed^Math.imul(S.turn+1,0x9E3779B1));all.forEach(s=>{S.mana[s.o]-=s.card.c;S.hide.add(s.cell)});S.ppl=all.filter(s=>s.cell>=0).map(s=>[s.cell,s.o]);
   S.stk=[all.filter(s=>s.o===0),[]];render();await battle();const th=all.filter(s=>s.o===1);for(let k=0;k<th.length;k++){S.stk=[S.stk[0],th.slice(0,k+1)];render();const e=document.querySelector('#sk1 [data-n="'+k+'"]');if(e)e.animate(SKIN,{duration:620,easing:"cubic-bezier(.2,.85,.25,1)"});await sleep(380)}await sleep(450);
   const sd=NET.on?relO(NET.pr()<.5?0:1):(Math.random()<.5?0:1);for(const s of[...all.filter(s=>s.cell<0&&s.o===sd),...all.filter(s=>s.cell<0&&s.o!==sd)]){S.stk=S.stk.map(L=>L.filter(x=>x!==s));await useAct(s)}
   const cs=[...new Set(all.filter(s=>s.cell>=0).map(s=>s.cell))].sort((a,b)=>a-b);S.pend=new Set(cs);S.q=[];S.pl={};all.forEach(s=>{if(s.cell>=0)(S.pl[s.cell]=S.pl[s.cell]||[]).push(s.o)});
@@ -166,7 +168,7 @@ async function commit(){
   if(c0>c1){S.pts[0]++;S.pop=0;msg="あなたが1点"}else if(c1>c0){S.pts[1]++;S.pop=1;msg=OPN()+"が1点"}
   S.log=`エリア ${c0} – ${c1}：${msg}`;if(c0!==c1){flyPt(c0>c1?0:1);await sleep(1250)}render();await sleep(900);
   const over=S.pts[0]>=S.win||S.pts[1]>=S.win||S.turn>=S.max;
-  if(!over){S.jq.forEach(q=>q&&(q.out=1));render();await sleep(700);S.jq=[];render();await sleep(200);for(let i=0;i<36;i++){const b=S.board[i];if(b&&w[ar(i)]===1-b.o)for(const f of b.card.f)if(f.w==="l")await fire(b,i,f)}for(let i=0;i<36;i++){const b=S.board[i];if(b)for(const f of b.card.f)if(f.w==="e")await fire(b,i,f)}S.eff=0;if(!PIN)info.classList.remove("on");finfo.classList.remove("on")}
+  if(!over){S.jq.forEach(q=>q&&(q.out=1));render();await sleep(700);S.jq=[];render();await sleep(200);{const wn=c0>c1?0:c1>c0?1:-1;if(wn>=0)for(let i=0;i<36;i++){const b=S.board[i];if(b&&b.o===wn)for(const f of b.card.f)if(f.w==="g")await fire(b,i,f)}}for(let i=0;i<36;i++){const b=S.board[i];if(b&&w[ar(i)]===1-b.o)for(const f of b.card.f)if(f.w==="l")await fire(b,i,f)}for(let i=0;i<36;i++){const b=S.board[i];if(b)for(const f of b.card.f)if(f.w==="e")await fire(b,i,f)}S.eff=0;if(!PIN)info.classList.remove("on");finfo.classList.remove("on")}
   S.jq=[];if(NET.on)netSum(over);
   if(over){
     const t=sm.reduce((a,[x,y])=>[a[0]+x,a[1]+y],[0,0]);
