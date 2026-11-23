@@ -40,7 +40,7 @@ const mq=async()=>{const q=S.mq||[];S.mq=[];for(const j of q){if(!S.board[j])con
 const edge=i=>{const r=i/6|0,c=i%6;return r%5===0||c%5===0};
 /* ---- 新カード用の共通部品 ---- */
 // フジ(w:"z")の隣はパワーアップ不可。プラスの加算はすべて gb() を通す
-const noUp=j=>adj(j).some(k=>S.board[k]&&S.board[k].card.f.some(f=>f.w==="z"));
+const noUp=(j,o=(S.board[j]||{}).o)=>adj(j).some(k=>S.board[k]&&S.board[k].o!==o&&S.board[k].card.f.some(f=>f.w==="z"));
 const gb=(j,n)=>{const x=S.board[j];if(!x||(n>0&&noUp(j)))return false;x.bonus=(x.bonus||0)+n;return true};
 const RN=n=>NET.on?prnd(n):rnd(n);   // 公開情報の乱数（オンラインは両端末で同じ列）
 const byCard=n=>CARDS.find(c=>c.n===n);
@@ -57,6 +57,11 @@ const bonusAt=async(j,n)=>{const x=S.board[j];if(!x||(n>0&&noUp(j)))return false
 SEL.ad=(b,i)=>adj(i).filter(j=>S.board[j]);
 SEL.mo=(b,i)=>S.board.map((x,j)=>j).filter(j=>j!==i&&S.board[j]&&S.board[j].o===b.o);
 SEL.op=b=>S.board.map((x,j)=>j).filter(j=>S.board[j]&&S.board[j].o!==b.o);
+const trCells=o=>{if(o===0&&!S.busy&&!S.deck[0].some(c=>c.a.includes("草")))return[];const pl=j=>S.busy?(S.ppl||[]).some(([c,w])=>c===j&&w===o):o===0&&S.st.some(s=>s.cell===j);return S.board.map((x,j)=>j).filter(j=>!S.board[j]&&!pl(j))};
+// ドクダミ：互いのデッキにカードが飛び込む演出
+const deckFx=async i=>{if(RM)return;const e=document.querySelector(`#board [data-i="${i}"]`);if(!e)return;const r=e.getBoundingClientRect(),x0=r.left+r.width/2-23,y0=r.top+r.height/2-35,h=$("hand").getBoundingClientRect(),b=$("board").getBoundingClientRect();
+ [[h.left+h.width/2-23,h.top+h.height*.6,"#6dffa8"],[b.left+b.width/2-23,-80,"#ff8fb0"]].forEach(([x1,y1,col],k)=>puff(mkI("dfl ac-dm",`left:${x0}px;top:${y0}px;border-color:${col};box-shadow:0 0 14px ${col}`),[{transform:"scale(.3) rotate(-8deg)",opacity:0},{transform:"scale(1.15) rotate(0)",opacity:1,offset:.25},{transform:"scale(1.15) rotate(0)",opacity:1,offset:.42},{transform:`translate(${x1-x0}px,${y1-y0}px) scale(.35) rotate(${k?-14:14}deg)`,opacity:.15}],{duration:1300,delay:k*120,easing:"ease-in-out",fill:"backwards"}));
+ await sleep(1450)};
 const dkL=(b,i)=>adj(i).filter(j=>S.board[j]&&pw(S.board[j],j)<=1);
 const prolifRsv={w:"p",t:"次のターン終了時、増殖する",s:"増殖予約",k:"up",run:b=>{b.pr=S.turn+1}};
 const prolifGo={w:"e",hid:1,ok:b=>b.pr===S.turn,steps:[{s:"増殖",k:"up",run:async(b,i)=>{await prolif(b,i)}}]};
@@ -69,10 +74,10 @@ const CARDS=[
 ["🌼","たんぽぽ","セイヨウタンポポ",2,2,["花"],[{w:"p",t:"デッキ内のたんぽぽをすべて咲かせる",s:"咲かせる",k:"up",hvf:b=>S.deck[b.o].filter(c=>c.n==="たんぽぽ").length,run:async(b,i,T,k)=>{const L=[];if(NET.on&&b.o===1){S.deck[1].splice(0,k);for(let n=0;n<k;n++)L.push({...CARDS.find(c=>c.n==="たんぽぽ")})}else{L.push(...S.deck[b.o].filter(c=>c.n==="たんぽぽ"));S.deck[b.o]=S.deck[b.o].filter(c=>c.n!=="たんぽぽ")}for(const c of L){const em=S.board.map((x,j)=>j).filter(j=>!S.board[j]&&(!S.pl[j]||S.pl[j].every(x=>x!==b.o)));if(!em.length)break;const j=em[prnd(em.length)];S.board[j]={o:b.o,card:c};S.hide.delete(j);S.fx={cell:j,k:"drop"};render();await sleep(1350);S.q.push(j)}}}]],
 ["💙","ネモフィラ","インシグニスブルー",3,1,["花"],[D(1,"1枚引く"),{w:"s",t:"4~5ターン目の間、+5",pw:()=>S.turn>=4&&S.turn<=5?5:0}]],
 ["💜","ラベンダー","コスミックブルー",3,4,["花"],[{w:"p",t:"自分の手札を1枚選んでデッキに戻す",s:"戻す",k:"up",ok:b=>S.hand[b.o].length>0,run:async b=>{const H=S.hand[b.o],i=await pick(b.o,{hand:H.map((c,k)=>k),msg:"デッキに戻す手札を選んでください"});S.deck[b.o].push(H.splice(i,1)[0]);S.deck[b.o].sort(()=>Math.random()-.5)}},D(2,"2枚引く")]],
-["🪻","すみれ","ゲンジスミレ",3,1,["花"],[{w:"t",n:2,t:"このエリアに配置した自分の他の花を+2する",on:(sb,si,nb,ni)=>nb.o===sb.o&&ar(ni)===ar(si)&&fl(nb)}]],
+["🪻","すみれ","ゲンジスミレ",3,1,["花"],[{w:"t",n:2,t:"隣接マスに配置した自分の他の花を+2する",on:(sb,si,nb,ni)=>nb.o===sb.o&&adj(si).includes(ni)&&fl(nb)}]],
 ["🏵️","マリーゴールド","ボナンザ",4,4,["花"],[B(-1,"ao","隣接する相手すべて-1")]],
 ["🌸","スイートピー","ステラ",4,4,["花"],[{w:"p",t:"自分の他の花を1つ選び、+2して移動",s:"移動",k:"up",ok:(b,i)=>SEL.of(b,i).length>0,run:async(b,i)=>{const j=await pick(b.o,{cells:SEL.of(b,i),msg:"+2して移動する花を選んでください"});gb(j,2);S.fx=null;render();const em=S.board.map((x,k)=>k).filter(k=>!S.board[k]&&(!S.pl[k]||S.pl[k].every(x=>x!==b.o)));if(!em.length)return;const k=await pick(b.o,{cells:em,msg:"移動先のマスを選んでください"});S.board[k]=S.board[j];S.board[j]=null;S.hide.delete(k);S.fx={cell:k,k:"drop"};render();await sleep(1425)}}]],
-["🤍","ゆり","カサブランカ",6,5,["花"],[D(2,"2枚引く"),B(1,"me","このエリアが負けたとき+1","l")]],
+["🤍","ゆり","カサブランカ",6,5,["花"],[D(2,"2枚引く"),B(3,"me","このエリアが負けたとき+3","l")]],
 ["🌺","牡丹","花王",7,8,["花","メイン"],[B(2,"of","他の自分の花をすべて+2")],1,"f","牡丹のはなびら"],
 ["🌸","牡丹のはなびら","トークン",0,null,["アクション","花"],[{w:"a",t:"自分の花を1つ選び+2",msg:"+2する花を選んでください",cells:o=>S.board.map((x,j)=>j).filter(j=>fl(S.board[j])&&S.board[j].o===o),use:async(o,j)=>{if(!S.board[j])return;gb(j,2);render();const el=document.querySelector(`#board [data-i="${j}"]`);if(el)el.classList.add("up");await sleep(900)}}],0,"f",void 0,1]
 ,["🤍","ハナミズキ","クラウドナイン",2,2,["木"],[{w:"p",t:"自分の手札の木を1つ選び、-1コスト",s:"-1コスト",k:"up",hvf:b=>S.hand[b.o].some(c=>c.a.includes("木")&&c.c>0),run:async b=>{const H=S.hand[b.o],ix=H.map((c,k)=>k).filter(k=>H[k].hid||(H[k].a.includes("木")&&H[k].c>0));const i=await pick(b.o,{hand:ix,msg:"-1コストにする木を選んでください"});if(H[i]&&!H[i].hid&&H[i].c>0)H[i].c--}}],void 0,"t"],
@@ -91,25 +96,24 @@ const CARDS=[
 ["🌺","ウメ","南高梅",2,5,["木","花"],[{w:"e",t:"ターン終了時、ターン中効果によって自分のマナが増えていなければ、-2",s:"-2",k:"dn",tg:SEL.me,ok:b=>!(S.mg&&S.mg[b.o]),run:b=>{b.bonus=(b.bonus||0)-2}}],void 0,"t"]
 ,["🌿","アイビー","ピッツバーグ",1,2,["草"],[{w:"p",t:"「アイビー」を相手の手札に加える",s:"相手の手札へ",k:"up",run:b=>{addHand(1-b.o,"アイビー")}}],void 0,"t"],
 ["🍃","ナツヅタ","",2,1,["草"],[{...prolifRsv},{...prolifGo},{w:"p",t:"隣接するカード1つ-1",s:"-1",k:"dn",ok:(b,i)=>SEL.ad(b,i).length>0,run:async(b,i)=>{const j=await pick(b.o,{cells:SEL.ad(b,i),msg:"-1する隣接カードを選んでください"});await bonusAt(j,-1)}}],void 0,"t"],
-["🪻","フジ","ノダフジ",3,4,["草"],[{w:"z",t:"隣接するカードはパワーアップできない"}],void 0,"t"],
-["🌾","エノコログサ","",2,2,["草"],[{w:"t",t:"隣接するマスにカードが配置されたとき、自分のデッキから草を1つ手札に加える",s:"草を手札へ",k:"up",on:(sb,si,nb,ni)=>adj(si).includes(ni),hvf:b=>S.deck[b.o].some(c=>!c.hid&&c.a.includes("草"))?1:0,run:sb=>{grassToHand(sb.o)}}],void 0,"t"],
+["🪻","フジ","ノダフジ",3,4,["草"],[{w:"z",t:"隣接する相手カードはパワーアップできない"}],void 0,"t"],
+["🌾","エノコログサ","",2,2,["草"],[{w:"t",t:"隣接マスに相手カードが配置されたとき、自分のデッキから草を1つ手札に加える",s:"草を手札へ",k:"up",on:(sb,si,nb,ni)=>nb.o!==sb.o&&adj(si).includes(ni),hvf:b=>S.deck[b.o].some(c=>!c.hid&&c.a.includes("草"))?1:0,run:sb=>{grassToHand(sb.o)}}],void 0,"t"],
 ["🌼","アサガオ","アーリーコール",2,1,["花","草"],[{w:"s",t:"奇数ターン+2",pw:()=>S.turn%2?2:0},{w:"p",t:"「トレリス」を手札に加える",s:"+トレリス",k:"up",run:b=>{addHand(b.o,"トレリス")}}],void 0,"t"],
-["☘️","カタバミ","",1,1,["草"],[{w:"x",t:"隣接するカードが撤去されたとき、そこに増殖する",s:"増殖",k:"up",on:()=>true,run:async(b,j,i)=>{const pl=(S.pl||{})[i];if(S.board[i]||(pl&&pl.includes(b.o)))return;await spawnAt(b,i)}}],void 0,"t"],
+["☘️","カタバミ","",0,1,["草"],[{w:"x",t:"隣接するカードが撤去されたとき、そこに増殖する",s:"増殖",k:"up",on:()=>true,run:async(b,j,i)=>{const pl=(S.pl||{})[i];if(S.board[i]||(pl&&pl.includes(b.o)))return;await spawnAt(b,i)}}],void 0,"t"],
 ["🌱","ミント","スペアミント",0,1,["草"],[{w:"d",t:"このカードが撤去されたとき、「ミント」を2つ手札に加える",s:"+ミント×2",k:"up",run:b=>{addHand(b.o,"ミント");addHand(b.o,"ミント")}}],void 0,"t"],
 ["💮","クレマチス","白万重",4,5,["花","草"],[{w:"p",t:"自分の他のカード2つを-1し、相手のカード1つ-4",s:"-1 / -4",k:"dn",ok:(b,i)=>SEL.mo(b,i).length>0,run:async(b,i)=>{const a=[];for(let n=0;n<2;n++){const L=SEL.mo(b,i).filter(j=>!a.includes(j));if(!L.length)break;a.push(await pick(b.o,{cells:L,msg:`-1する自分の他のカードを選んでください（${n+1}/2）`}))}
  for(const j of a)await bonusAt(j,-1);const O=SEL.op(b,i);if(O.length){const j=await pick(b.o,{cells:O,msg:"-4する相手のカードを選んでください"});await bonusAt(j,-4)}}}],void 0,"t"],
 ["🍓","イチゴ","オランダイチゴ",2,3,["果物"],[{w:"g",t:"自分のポイントが増えたとき、「イチゴ」を手札に加える",s:"+イチゴ",k:"up",run:b=>{addHand(b.o,"イチゴ")}}],void 0,"t"],
-["💠","ツルニチニチソウ","",2,2,["草"],[D(2,"このエリアに5枚以上あれば、2枚引く",(b,i)=>S.board.filter((x,j)=>x&&ar(j)===ar(i)).length>=5)],void 0,"t"],
-["🍀","シロツメクサ","",1,1,["草"],[{w:"p",t:"50%の確率で増殖し、マナ+1",s:"増殖?",k:"up",run:async(b,i)=>{if(RN(2)){S.fx={cell:i,k:"clash",c:"debuff",txt:"増殖せず"};render();await sleep(800);return}
+["💠","ツルニチニチソウ","",1,1,["草"],[D(2,"このエリアに5枚以上あれば、2枚引く",(b,i)=>S.board.filter((x,j)=>x&&ar(j)===ar(i)).length>=5)],void 0,"t"],
+["🍀","シロツメクサ","",2,1,["草"],[{w:"p",t:"50%の確率で増殖し、マナ+1",s:"増殖?",k:"up",run:async(b,i)=>{if(RN(2)){S.fx={cell:i,k:"clash",c:"debuff",txt:"増殖せず"};render();await sleep(800);return}
  if(await prolif(b,i)){S.fx={cell:i,k:"clash",c:"buff",txt:"+1マナ"};render();await sleep(900);gm(b.o,1)}}}],void 0,"t"],
-["🥬","ドクダミ","",1,1,["草"],[{w:"p",t:"隣接するパワー1以下のカードを1つ撤去し、「ドクダミ」を互いのデッキに加える",s:"撤去",k:"dn",ok:(b,i)=>dkL(b,i).length>0,run:async(b,i)=>{const j=await pick(b.o,{cells:dkL(b,i),msg:"撤去する隣接カードを選んでください"});S.fx=null;render();await fadeOut([j]);const r=await rm([j]);if(r.length){addDeck(0,"ドクダミ");addDeck(1,"ドクダミ")}}}],void 0,"t"],
-["🌿","クズ","",3,1,["草","メイン"],[{...prolifRsv},{...prolifGo},B(-1,"ao","隣接するすべての相手-1")],1,"t","トレリス"],
-["🪜","トレリス","トークン",1,null,["アクション","草"],[{w:"a",t:"自分のデッキから草を1つ生やす",msg:"草を生やすマスを選んでください",
- cells:o=>{if(o===0&&!S.busy&&!S.deck[0].some(c=>c.a.includes("草")))return[];const pl=j=>S.busy?(S.ppl||[]).some(([c,w])=>c===j&&w===o):o===0&&S.st.some(s=>s.cell===j);return S.board.map((x,j)=>j).filter(j=>!S.board[j]&&!pl(j))},
- use:async(o,j)=>{if(S.board[j])return;let nm=0;if(NET.on&&o===1)nm=await netWait("out");else{const g=S.deck[o].filter(c=>c.a.includes("草"));nm=g.length?g[rnd(g.length)].n:0;if(NET.on)netSend({k:"out",v:nm})}
+["🥬","ドクダミ","",1,1,["草"],[{w:"p",t:"隣接するパワー1以下のカードを1つ撤去し、「ドクダミ」を互いのデッキに加える",s:"撤去",k:"dn",ok:(b,i)=>dkL(b,i).length>0,run:async(b,i)=>{const j=await pick(b.o,{cells:dkL(b,i),msg:"撤去する隣接カードを選んでください"});S.fx=null;render();await fadeOut([j]);const r=await rm([j]);if(r.length){addDeck(0,"ドクダミ");addDeck(1,"ドクダミ");await deckFx(i)}}}],void 0,"t"],
+["🌿","クズ","",4,1,["草","メイン"],[{...prolifRsv},{...prolifGo},B(-2,"ao","隣接するすべての相手-2")],1,"t","トレリス"],
+["🪜","トレリス","トークン",1,null,["アクション","草"],[{w:"a",t:"自分のデッキから草を1つ、ランダムな空きマスに生やす",rnd:1,cells:trCells,
+ use:async o=>{const E=trCells(o);if(!E.length)return;const j=E[RN(E.length)];let nm=0;if(NET.on&&o===1)nm=await netWait("out");else{const g=S.deck[o].filter(c=>c.a.includes("草"));nm=g.length?g[rnd(g.length)].n:0;if(NET.on)netSend({k:"out",v:nm})}
   if(!nm)return;let c;if(NET.on&&o===1){S.deck[1].pop();c={...byCard(nm)}}else{c=S.deck[o].splice(S.deck[o].findIndex(x=>x.n===nm),1)[0]}
   S.board[j]={o,card:c};S.hide.delete(j);S.fx={cell:j,k:"drop"};render();await sleep(1350);(S.q=S.q||[]).push(j)}}],0,"t",void 0,1]
 ].map(mk);
 const mkDeck=d=>CARDS.filter(c=>c.d===d).flatMap(c=>c.m?[{...c}]:[{...c},{...c}]).sort(()=>Math.random()-.5);
-const pw=(b,i)=>{const st=b.card.f.filter(f=>f.w==="s").reduce((s,f)=>s+f.pw(b,i),0);return Math.max(0,(b.card.p||0)+(b.bonus||0)+(st>0&&noUp(i)?0:st))};
+const pw=(b,i)=>{const st=b.card.f.filter(f=>f.w==="s").reduce((s,f)=>s+f.pw(b,i),0);return Math.max(0,(b.card.p||0)+(b.bonus||0)+(st>0&&noUp(i,b.o)?0:st))};
 const AN=["左上","右上","左下","右下"];
