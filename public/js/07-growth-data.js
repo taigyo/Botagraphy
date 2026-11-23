@@ -7,7 +7,7 @@ const GK="bota_grow_v1",GNEED=10;
    一般＝FXG のカタログ。カテゴリごとに同時装着の上限があり（FX_CAT）、合計7種まで。
    固有＝FX_UNI に載っている植物だけが獲得でき、上の7種には数えない。
    「付き方」＝カードごとの書き出しJSON（animation）。FXCFG に入れると既定値より優先される。 */
-const FX_CAT={weather:["天気",1],particles:["粒子",2],sparkle:["キラ",1],light:["ライト",1],sway:["揺れ",1],filter:["色加工",1],unique:["固有",9]};
+const FX_CAT={weather:["天気",1],particles:["粒子",1],sparkle:["キラ",1],light:["ライト",1],sway:["揺れ",1],filter:["色加工",1]};
 const FXG=(()=>{const P=(cat,name,desc,e)=>({cat,name,desc,e}),
   w=(type,count,x)=>({kind:"weather",type,layer:"back+front",count,speed:1,size:1.5,sway:1,loop:"seamless",...x}),
   pt=(type,count,x)=>({kind:"particles",type,color:"mix",layer:"back+front",count,speed:1,size:1.5,sway:1,loop:"seamless",...x}),
@@ -32,10 +32,10 @@ const FXG=(()=>{const P=(cat,name,desc,e)=>({cat,name,desc,e}),
   f_sepia:P("filter","セピア","古い写真のような色になります",fl("sepia")),
   f_cool:P("filter","クール","涼しげな青みになります",fl("cool")),
   f_vivid:P("filter","ビビッド","色が鮮やかになります",fl("vivid")),
-  ume_petals:P("unique","花びら(ウメ)","ウメの花びらが舞います",pt("ume_petals",14)),
-  momiji_leaves:P("unique","葉(もみじ)","もみじの葉が舞います",pt("momiji_leaves",12)),
-  tanpopo_fluff:P("unique","たんぽぽの綿毛","綿毛がふわふわ漂います",pt("tanpopo_fluff",10,{color:undefined})),
-  shinju_light:P("unique","神樹の光","根の割れ目から光が脈打ち、光の粒が湧き上がります",{kind:"shinju",type:"shinju_light",pulse:{target:"sub",opacity:[.55,1],periodSec:4,scale:[1,1.02],pivot:"anchorY"},emitter:{source:"sub2",count:24,speed:.5,size:.8,direction:"up"}})}})();
+  ume_petals:P("particles","花びら(ウメ)","ウメの花びらが舞います",pt("ume_petals",14)),
+  momiji_leaves:P("particles","葉(もみじ)","もみじの葉が舞います",pt("momiji_leaves",12)),
+  tanpopo_fluff:P("particles","たんぽぽの綿毛","綿毛がふわふわ漂います",pt("tanpopo_fluff",10,{color:undefined})),
+  shinju_light:P("light","神樹の光","根の割れ目から光が脈打ち、光の粒が湧き上がります",{kind:"shinju",type:"shinju_light",pulse:{target:"sub",opacity:[.55,1],periodSec:4,scale:[1,1.02],pivot:"anchorY"},emitter:{source:"sub2",count:24,speed:.5,size:.8,direction:"up"}})}})();
 const FX_UNI={"ウメ":["ume_petals"],"もみじ":["momiji_leaves"],"たんぽぽ":["tanpopo_fluff"],"神樹の根":["shinju_light"]};
 /* カードごとの付き方（書き出しJSONの animation をそのまま入れる） */
 const FXCFG={"モクセイ":{"effects":[{"kind":"particles","type":"petals","color":"orange","layer":"back+front","count":36,"speed":1,"size":2.55,"loop":"seamless","sway":1.3}],"unique":null},"クロッカス":{"effects":[{"kind":"weather","type":"snow","layer":"back+front","count":40,"speed":1,"size":1.5,"loop":"seamless","sway":1.3}],"unique":null},"チューリップ":{"effects":[{"kind":"particles","type":"petals","color":"pink","layer":"back+front","count":36,"speed":1,"size":2.7,"loop":"seamless","sway":1.3}],"unique":null},"ゆり":{"effects":[{"kind":"particles","type":"petals","color":"pink","layer":"back+front","count":36,"speed":1,"size":2.7,"loop":"seamless","sway":1.3}],"unique":null},"もみじ":{"effects":[],"unique":{"effects":[{"kind":"particles","type":"momiji_leaves","color":"mix","layer":"back+front","count":24,"speed":1,"size":3,"loop":"seamless","sway":1.5}]}},"たんぽぽ":{"effects":[],"unique":{"effects":[{"kind":"particles","type":"tanpopo_fluff","spriteSource":"effect-layer","spriteLayerId":75,"layer":"back+front","count":16,"speed":0.7,"size":1.5,"loop":"seamless","sway":1.3}]}},"ウメ":{"effects":[],"unique":{"effects":[{"kind":"particles","type":"ume_petals","color":"mix","spriteSource":"effect-layer","spriteLayerId":66,"layer":"back+front","count":24,"speed":0.85,"size":1.5,"loop":"seamless","sway":1.2}]}},"スギ":{"effects":[{"kind":"particles","type":"glow","layer":"front","count":30,"speed":1,"size":1.5,"loop":"seamless","sway":1.3}],"unique":null},"ハナミズキ":{"effects":[{"kind":"particles","type":"petals","color":"white","layer":"back+front","count":36,"speed":1,"size":2.25,"loop":"seamless","sway":1.3}],"unique":null},"桜":{"effects":[{"kind":"sway","target":"main","deg":1,"periodSec":7,"pivot":"anchorY"}],"unique":null},"ネモフィラ":{"effects":[{"kind":"weather","type":"fog","layer":"back+front","count":6,"speed":1.5,"size":2.25,"loop":"seamless","sway":2}],"unique":null}};
@@ -47,7 +47,9 @@ const FX_PCOL={"牡丹":["#e8454f","#ff6b6b","#c92f3a","#ff8a8a"],"クロッカ�
 const fxEnt=(id,n)=>{const c=FXCFG[n],a=c?[...(c.effects||[]),...((c.unique&&c.unique.effects)||[])]:[];let e=a.find(e=>fxEid(e)===id)||(FXG[id]&&FXG[id].e);if(e&&FX_PCOL[n]&&(e.type==="petals"||e.type==="ume_petals"))e={...e,colors:FX_PCOL[n]};return e};
 const fxUni=n=>{const c=FXCFG[n],u=c&&c.unique&&c.unique.effects?c.unique.effects.map(fxEid):[];return[...new Set([...(FX_UNI[n]||[]),...u])].filter(id=>FXG[id])};
 const FX_BAN={"神樹の根":["particles","sway"]},fxOk=(id,n)=>!(FX_BAN[n]||[]).includes(FXG[id].cat);
-const fxGen=n=>Object.keys(FXG).filter(k=>FXG[k].cat!=="unique"&&fxOk(k,n));
+/* 固有（そのカードだけが獲得できる）：カテゴリは一般と同じ（粒子・ライト）で、上限もそのカテゴリに従う */
+const FX_UQ=new Set(Object.keys({...FX_UNI,...FXCFG}).flatMap(fxUni));
+const fxGen=n=>Object.keys(FXG).filter(k=>!FX_UQ.has(k)&&fxOk(k,n));
 /* 獲得の出やすさ（1が標準）。色や形の種類が多いものは少し多めに。 */
 const FX_W={petals:2,leaves:1.5,kira_star:.8,kira_cross:.8,kira_dot:.8,kira_diamond:.8,f_sunset:.7,f_mono:.7,f_sepia:.7,f_cool:.7,f_vivid:.7,ume_petals:1.5,momiji_leaves:1.5,tanpopo_fluff:1.5};
 const fxPick=a=>{const w=a.map(id=>FX_W[id]==null?1:FX_W[id]);let r=Math.random()*w.reduce((x,y)=>x+y,0);for(let i=0;i<a.length;i++){r-=w[i];if(r<0)return a[i]}return a[a.length-1]};
@@ -57,11 +59,11 @@ let GR=(()=>{try{const j=JSON.parse(localStorage.getItem(GK)||"null");if(j&&type
 const gsave=()=>{try{localStorage.setItem(GK,JSON.stringify(GR))}catch{}};
 const gst=n=>GR.cards[n]||(GR.cards[n]={lv:0,own:[],eq:[]});
 /* 読み込み時：Lvに見合う固有（floor(Lv/10)個、定義数が上限）が足りなければ付与 */
-(()=>{let ch=0;for(const[n,g]of Object.entries(GR.cards)){const all=fxUni(n),want=Math.min(Math.floor((g.lv|0)/10),all.length);let have=g.own.filter(id=>FXG[id].cat==="unique").length;
+(()=>{let ch=0;for(const[n,g]of Object.entries(GR.cards)){const all=fxUni(n),want=Math.min(Math.floor((g.lv|0)/10),all.length);let have=g.own.filter(id=>FX_UQ.has(id)).length;
   while(have<want){const u=all.filter(id=>!g.own.includes(id));if(!u.length)break;g.own.push(fxPick(u));have++;ch=1}}if(ch)gsave()})();
 if(GR.items>0){COIN+=GR.items;GR.items=0;gsave();coinSave()}
 /* ---- 汎用エフェクト（ショップで買う）：レベルアップの獲得とは別の仕組み ---- */
-const INV_K="bota_inv_v1";let INV=(()=>{try{const j=JSON.parse(localStorage.getItem(INV_K)||"{}")||{},o={};for(const[k,v]of Object.entries(j))if(FXG[k]&&FXG[k].cat!=="unique"&&v>0)o[k]=v|0;return o}catch{return{}}})();
+const INV_K="bota_inv_v1";let INV=(()=>{try{const j=JSON.parse(localStorage.getItem(INV_K)||"{}")||{},o={};for(const[k,v]of Object.entries(j))if(FXG[k]&&!FX_UQ.has(k)&&v>0)o[k]=v|0;return o}catch{return{}}})();
 const invSave=()=>{try{localStorage.setItem(INV_K,JSON.stringify(INV))}catch{}},invTotal=()=>Object.values(INV).reduce((a,b)=>a+b,0);
 function toast(h){const d=document.createElement("div");d.className="ctoast";d.innerHTML=h;document.body.append(d);setTimeout(()=>d.remove(),2600)}
 /* 日替わりの品ぞろえ：ローカルの日付で決まり、その日は誰が見ても同じ（価格も固定）。0時に入れ替わる */
@@ -69,7 +71,7 @@ const SHOP_K="bota_shop_v1";
 const dayKey=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
 const hash32=t=>{let h=2166136261;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0};
 const rng32=a=>()=>{a=(a+0x6D2B79F5)|0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296};
-function shopLineup(key){const r=rng32(hash32("botagraphy-shop:"+key)),ids=Object.keys(FXG).filter(k=>FXG[k].cat!=="unique"),pk=[];for(let i=0;i<3;i++)pk.push(ids.splice(Math.floor(r()*ids.length),1)[0]);return pk.map(id=>({id,price:15+Math.floor(r()*16)}))}
+function shopLineup(key){const r=rng32(hash32("botagraphy-shop:"+key)),ids=Object.keys(FXG).filter(k=>!FX_UQ.has(k)),pk=[];for(let i=0;i<3;i++)pk.push(ids.splice(Math.floor(r()*ids.length),1)[0]);return pk.map(id=>({id,price:15+Math.floor(r()*16)}))}
 let SHOP=(()=>{try{const j=JSON.parse(localStorage.getItem(SHOP_K)||"{}")||{};return{d:typeof j.d==="string"?j.d:"",sold:Array.isArray(j.sold)?j.sold:[]}}catch{return{d:"",sold:[]}}})();
 const shopSave=()=>{try{localStorage.setItem(SHOP_K,JSON.stringify(SHOP))}catch{}};
 const shopSync=()=>{const k=dayKey();if(SHOP.d!==k){SHOP={d:k,sold:[]};shopSave()}return k};
