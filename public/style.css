@@ -1492,3 +1492,32 @@ body:has(#hmdt.on) #home>:not(#hmdt),body:has(#dkdt.on) #dkb>:not(#dkdt),body:ha
 .card.ill.ac-dm,.dkc.ill.ac-dm{background-image:url(img/card-ill-ac-dm-83f155.webp)}
 .card.ill.ac-kz,.dkc.ill.ac-kz{background-image:url(img/card-ill-ac-kz-ac29bb.webp)}
 .card.ill.ac-tr,.dkc.ill.ac-tr{background-image:url(img/card-ill-ac-tr-429aeb.webp)}
+
+/* ドクダミのデッキ追加演出 */
+.dfl{position:absolute;width:46px;height:76px;border:2px solid #6dffa8;border-radius:7px;background:#2a5a3a center/cover no-repeat;pointer-events:none;z-index:45}
+.dfl.ac-dm{background-image:url(img/card-ill-ac-dm-83f155.webp)}
+
+/* ===== 対戦設定（#bmat）・ソロ終了ボタン（#sres） ===== */
+#bmat{position:fixed;inset:0;z-index:210;display:none;flex-direction:column;align-items:center;color:#1f4a35;background:linear-gradient(135deg,#f3fcf7,#e2f6ea 50%,#ebfaf0);overflow:hidden}#bmat.on{display:flex}
+#bmat header{position:relative;z-index:2;width:100%;box-sizing:border-box;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:16px 26px}
+#bmat h2{margin:0;font-weight:500;letter-spacing:.3em;font-size:clamp(20px,3.4vh,32px);color:#1f4a35;text-shadow:0 1px 0 #fff,0 0 12px #ffffffcc}
+#bmat .bsb:hover{transform:translateY(-2px);filter:brightness(1.12);box-shadow:0 7px 14px #0004;transition-duration:.15s}#bmat .bsb:active{transform:scale(.94)}
+.bmb{position:relative;z-index:1;flex:1;min-height:0;width:min(1100px,94vw);display:flex;flex-direction:column;gap:14px;padding:4px 0 24px}
+.bmmode{display:flex;align-items:baseline;justify-content:center;gap:14px}.bmmode b{font-size:22px;font-weight:500;letter-spacing:.2em}.bmmode span{font-size:15px;opacity:.7}
+.bmcols{flex:1;min-height:0;display:flex;gap:22px;justify-content:center}
+.bmc{flex:1;max-width:520px;min-height:0;display:flex;flex-direction:column;gap:10px;padding:14px 16px;border-radius:18px;background:linear-gradient(160deg,#ffffffcc,#eefaf2cc);box-shadow:0 4px 18px #0a3a2a22,inset 0 0 0 2px #ffffffd9}
+.bmc h3{margin:0;font-size:17px;font-weight:500;letter-spacing:.2em}
+.bml{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:3px}
+.bmd{display:flex;align-items:center;gap:12px;text-align:left;border:0;border-radius:14px;padding:9px 14px;font:inherit;color:#1f4a35;cursor:pointer;background:linear-gradient(160deg,#fff,#e6f6ec);box-shadow:0 2px 6px #0a3a2a22,inset 0 0 0 2px #cfeadb;transition:transform .45s,box-shadow .45s,filter .45s,background .45s}
+.bmd:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.04);box-shadow:0 7px 14px #0a3a2a33,inset 0 0 0 2px #a9dcc0;transition-duration:.3s}
+.bmd:active:not(:disabled){transform:scale(.97)}.bmd.pop{animation:bpop2 .35s ease-out}
+.bmd.on{background:linear-gradient(160deg,#f2fff6,#bfeccf);box-shadow:0 4px 12px #2a9a5a44,inset 0 0 0 3px #52c184}
+.bmd:disabled{opacity:.5;cursor:default}
+.bmi{flex:none;width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;font-style:normal;background:#fff;box-shadow:0 0 0 2px #fff,0 2px 6px #0a3a2a33}
+.bmi.ic{background:var(--ic) center/cover no-repeat;font-size:0}
+.bmt{display:flex;flex-direction:column;min-width:0}.bmt b{font-weight:500;font-size:17px;letter-spacing:.05em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.bmt em{font-style:normal;font-size:15px;opacity:.7}
+.bmed{align-self:flex-start}
+.bmgo{justify-content:center}.bmgo .obtn{padding:13px 44px;font-size:18px}.bmnote{text-align:center;margin:0}
+@media (max-width:760px){.bmcols{flex-direction:column;overflow:auto}.bmc{max-width:none;flex:none;max-height:46vh}}
+#sres{position:fixed;left:50%;bottom:7vh;transform:translate(-50%,24px);z-index:95;display:flex;gap:14px;opacity:0;pointer-events:none;transition:opacity .6s,transform .6s}
+#sres.on{opacity:1;transform:translate(-50%,0);pointer-events:auto;transition-duration:.4s}

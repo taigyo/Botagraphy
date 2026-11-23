@@ -40,7 +40,7 @@ function initOnline(g){
   Object.assign(NET,{on:true,you:g.you,seed:g.seed,q:{},w:{},sums:{},mine:{},sent:[],nw:0,os:0,dead:false,off:0,desync:0,t0:0,endAt:0,oppGone:0});NE.style.display="none";NE.dataset.on="";
   const o=(ON.st&&ON.st.players[1-g.you]);NET.opp=o?o.name:"相手";
   NET.pr=mul(g.seed);
-  $("bset").classList.remove("on");$("home").classList.remove("on");started=true;document.body.classList.add("net");
+  $("bset").classList.remove("on");$("bmat").classList.remove("on");$("home").classList.remove("on");started=true;document.body.classList.add("net");
   const mine=myDeck(ON.dk);
   S={win:5,max:15,turn:0,mana:[0,0],hand:[[],[]],board:Array(36).fill(null),pts:[0,0],st:[],sel:null,over:false,busy:false,log:"",res:"",hide:new Set(),fx:null,jq:[],pop:null,ini:0,nm:[0,0],stk:null,deck:[mine,mine.map(PH)]};
   const MN0=S.deck[0].find(c=>c.m===1);for(let i=0;i<3;i++){dr(0);dr(1)}

@@ -2,6 +2,7 @@
 const DK_KEY="botagraphy.decks2",isMn=c=>c.a.includes("メイン");
 const POOL=CARDS.filter(c=>(c.d==="f"||c.d==="t")&&!c.tok),TOKS=CARDS.filter(c=>c.tok),MAINS=POOL.filter(isMn),NORM=POOL.filter(c=>!isMn(c)),byN=n=>POOL.find(c=>c.n===n)||TOKS.find(c=>c.n===n);
 const dkNew=(name,s,emp)=>({id:"d"+Date.now().toString(36)+rnd(1e4),name,main:s?s.main:emp?null:(MAINS[0]?MAINS[0].n:null),k:s?[...s.k]:emp?[]:NORM.filter(c=>c.d==="f").map(c=>c.n)});
+const BM={mode:"solo",my:null,cpu:"preset"};let DKRET=0;
 let DKS=[dkNew("花デッキ")],ACT=DKS[0].id,SELD=0,started=false,DKL=0,LP=null,TOAST="";
 try{const j=JSON.parse(localStorage.getItem(DK_KEY)||"null");if(j&&Array.isArray(j.decks)&&j.decks.length){DKS=j.decks.map(d=>({id:String(d.id),name:String(d.name||"デッキ"),main:byN(d.main)&&isMn(byN(d.main))&&!byN(d.main).tok?d.main:null,k:[...new Set((d.k||[]).filter(n=>byN(n)&&!isMn(byN(n))&&!byN(n).tok))].slice(0,12)}));ACT=DKS.some(d=>d.id===j.act)?j.act:DKS[0].id}}catch(e){}
 const dkSave=()=>{try{localStorage.setItem(DK_KEY,JSON.stringify({decks:DKS,act:ACT}))}catch(e){}};
@@ -64,7 +65,7 @@ dkb.addEventListener("click",e=>{if(DKL){DKL=0;return}if(e.target.closest("#dkdt
 $("dkname").oninput=e=>{DKS[SELD].name=e.target.value||"デッキ";dkSave()};$("dkname").onchange=dkRender;
 $("dkact").onclick=()=>{ACT=DKS[SELD].id;dkSave();dkRender()};
 $("dkdel").onclick=()=>{if(DKS.length<2)return;const d=DKS.splice(SELD,1)[0];if(d.id===ACT)ACT=DKS[0].id;SELD=0;dkSave();dkRender()};
-$("hbD").onclick=()=>{$("home").classList.remove("on");$("dkb").classList.add("on");SELD=Math.max(0,DKS.findIndex(d=>d.id===ACT));TOAST="";dkRender()};
-$("dkbk").onclick=homeOpen;
+$("hbD").onclick=()=>{DKRET=0;$("home").classList.remove("on");$("dkb").classList.add("on");SELD=Math.max(0,DKS.findIndex(d=>d.id===ACT));TOAST="";dkRender()};
+$("dkbk").onclick=()=>{if(DKRET){DKRET=0;$("dkb").classList.remove("on");$("dkdt").classList.remove("on");bmatOpen()}else homeOpen()};
 $("hm").onclick=homeOpen;
 

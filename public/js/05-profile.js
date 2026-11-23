@@ -44,11 +44,40 @@ PS.addEventListener("input",e=>{if(e.target.id==="psnm"){PROF.name=e.target.valu
 PS.addEventListener("change",e=>{if(e.target.id==="psnm")e.target.value=PROF.name});
 $("hpset").onclick=psOpen;profShow();coinShow();
 
-function soloStart(){NET.on=false;document.body.classList.remove("net");$("bset").classList.remove("on");$("home").classList.remove("on");started=true;init()}
+function soloStart(){NET.on=false;document.body.classList.remove("net");$("bset").classList.remove("on");$("bmat").classList.remove("on");$("home").classList.remove("on");started=true;init()}
 $("hbB").onclick=bsetOpen;
 $("bsbk").onclick=()=>{if(bsFl)bsFlip(false);else bsetClose()};
-$("bsc1").onclick=()=>{pop($("bsc1"));if(!bsFl)setTimeout(soloStart,260);else onlRandom()};
-$("bsc2").onclick=()=>{pop($("bsc2"));if(!bsFl)bsFlip(true);else onlRoomMenu()};
+$("bsc1").onclick=()=>{pop($("bsc1"));if(!bsFl)setTimeout(()=>bmatOpen("solo"),260);else bmatOpen("random")};
+$("bsc2").onclick=()=>{pop($("bsc2"));if(!bsFl)bsFlip(true);else bmatOpen("room")};
+
+/* ---- 対戦設定：デッキ選択（ソロ・ランダム・ルーム共通）。自分のデッキ／ソロはCPUのデッキも選べる ---- */
+const BMT=document.createElement("div");BMT.id="bmat";document.body.append(BMT);
+const BMI={solo:["ソロ","CPUと対戦","バトル開始"],random:["ランダムマッチ","世界のだれかと対戦","マッチング開始"],room:["ルーム","合言葉で友だちと対戦","ルームへ進む"]};
+const bmFull=d=>dkFull(d);
+function bmatOpen(mode){if(mode)BM.mode=mode;$("home").classList.remove("on");$("bset").classList.remove("on");$("dkb").classList.remove("on");
+  if(!DKS.some(d=>d.id===BM.my&&bmFull(d)))BM.my=(DKS.find(d=>d.id===ACT&&bmFull(d))||DKS.find(bmFull)||{}).id||null;
+  if(BM.cpu!=="preset"&&!DKS.some(d=>d.id===BM.cpu&&bmFull(d)))BM.cpu="preset";
+  bmatRender();BMT.classList.add("on")}
+function bmatRender(){const m=BMI[BM.mode],solo=BM.mode==="solo";
+  const ico=d=>{const c=d&&d.main&&byN(d.main),k=c&&ART[c.n];return k?`<i class="bmi ic ic-${k}"></i>`:`<i class="bmi e">${c?c.e:"🌸"}</i>`};
+  const tile=(d,s,on)=>`<button class="bmd${on?" on":""}" data-s="${s}" data-id="${esc(d.id)}"${bmFull(d)?"":" disabled"}>${ico(d)}<span class="bmt"><b>${esc(d.name)}</b><em>${bmFull(d)?"メイン："+esc(d.main):"未完成（"+dkCnt(d)+"/25）"}</em></span></button>`;
+  const pre=`<button class="bmd${BM.cpu==="preset"?" on":""}" data-s="cpu" data-id="preset"><i class="bmi e">🌸</i><span class="bmt"><b>花デッキ（初期構成）</b><em>CPUの標準デッキ</em></span></button>`;
+  BMT.innerHTML=`<div class="waves"><i></i><i></i><i></i><i></i><i></i></div><header><button id="bmbk" class="bsb">← 戻る</button><h2>対戦設定</h2><span></span></header>
+  <div class="bmb"><div class="bmmode"><b>${m[0]}</b><span>${m[1]}</span></div>
+  <div class="bmcols"><section class="bmc"><h3>あなたのデッキ</h3><div class="bml">${DKS.map(d=>tile(d,"my",d.id===BM.my)).join("")}</div><button class="obtn sub bmed" data-a="edit">✎ このデッキを編集</button></section>
+  ${solo?`<section class="bmc"><h3>CPUのデッキ</h3><div class="bml">${pre}${DKS.map(d=>tile(d,"cpu",d.id===BM.cpu)).join("")}</div></section>`:""}</div>
+  ${BM.my?"":`<p class="os bmnote">完成したデッキがないため、初期構成の花デッキを使います</p>`}
+  <div class="orow bmgo"><button class="obtn" data-a="go">${m[2]}</button></div></div>`}
+function bmatBack(){BMT.classList.remove("on");bsetOpen();if(BM.mode!=="solo")bsFlip(true,true)}
+function bmatGo(){if(BM.my){ACT=BM.my;dkSave()}
+  if(BM.mode==="solo"){BMT.classList.remove("on");soloStart()}else{ON.dk=BM.my;if(BM.mode==="random")onlRandom();else onlRoomMenu()}}
+function bmatEdit(){const k=DKS.findIndex(d=>d.id===BM.my);SELD=k>=0?k:0;DKRET=1;BMT.classList.remove("on");$("dkb").classList.add("on");TOAST="";dkRender()}
+BMT.onclick=e=>{const b=e.target.closest("button");if(!b||b.disabled)return;pop(b);
+  if(b.id==="bmbk")setTimeout(bmatBack,120);
+  else if(b.dataset.s){if(b.dataset.s==="my"){BM.my=b.dataset.id;ACT=BM.my;dkSave()}else BM.cpu=b.dataset.id;BMT.querySelectorAll(`[data-s="${b.dataset.s}"]`).forEach(x=>x.classList.toggle("on",x===b))}
+  else if(b.dataset.a==="edit")setTimeout(bmatEdit,150);else if(b.dataset.a==="go")setTimeout(bmatGo,150)};
+$("sresr").onclick=()=>{$("sres").classList.remove("on");init()};
+$("sresb").onclick=()=>{$("sres").classList.remove("on");bmatOpen("solo")};
 
 const onl=$("onl"),obox=$("obox");
 const onlShow=h=>{obox.innerHTML=h;onl.classList.add("on")};

@@ -2,9 +2,9 @@ const $=i=>document.getElementById(i),rnd=n=>Math.floor(Math.random()*n),sleep=m
 const dr=o=>{const c=S.deck[o].pop();if(c&&S.hand[o].length<7){c.nw=Date.now();S.hand[o].push(c)}else if(c&&o===0)setTimeout(()=>vanish2(c),600)};
 const ar=i=>(i>=18?2:0)+(i%6>=3?1:0);
 let S;
-function init(){$("pp").classList.remove("on");const og=$("mg");if(og)og.remove();
+function init(){$("pp").classList.remove("on");$("sres").classList.remove("on");const og=$("mg");if(og)og.remove();
   const win=Math.max(1,Math.min(20,+$("win").value||5));$("win").value=win;
-  S={win,max:win*3,turn:0,mana:[0,0],hand:[[],[]],board:Array(36).fill(null),pts:[0,0],st:[],sel:null,over:false,busy:false,log:"",res:"",hide:new Set(),fx:null,jq:[],pop:null,ini:0,nm:[0,0],stk:null,deck:[myDeck(),mkDeck("f").filter(c=>c.m!==0)]};
+  S={win,max:win*3,turn:0,mana:[0,0],hand:[[],[]],board:Array(36).fill(null),pts:[0,0],st:[],sel:null,over:false,busy:false,log:"",res:"",hide:new Set(),fx:null,jq:[],pop:null,ini:0,nm:[0,0],stk:null,deck:[myDeck(BM.my||ACT),BM.cpu==="preset"||!DKS.some(d=>d.id===BM.cpu)?mkDeck("f").filter(c=>c.m!==0):myDeck(BM.cpu)]};
   const MN=[0,1].map(o=>S.deck[o].find(c=>c.m===1));for(let i=0;i<3;i++){dr(0);dr(1)}
   const s0=S;S.busy=true;mulligan().then(()=>{if(S!==s0)return;const tkf=o=>CARDS.find(c=>c.n===(MN[o]&&MN[o].tk||"牡丹のはなびら"));S.hand[0].push({...tkf(0),nw:Date.now()});S.hand[1].push({...tkf(1)});S.busy=false;next()});
 }
@@ -79,7 +79,7 @@ async function commitOld(){
 let PIN=null;
 const actT=(o,c)=>{const f=c.f.find(x=>x.w==="a");return f?f.cells(o):[]};
 const skh=(L,o)=>{const f=s=>o?`<i data-n="${L.indexOf(s)}"></i>`:`<i ${S.stk?"":"data-k=\""+S.st.indexOf(s)+"\""}${ART[s.card.n]?" class=\"ic ic-"+ART[s.card.n]+"\"":""}>${ART[s.card.n]?"":s.card.e}</i>`,a=L.filter(s=>s.cell<0),c=L.filter(s=>s.cell>=0);return(a.length?`<b class="g ac">${a.map(f).join("")}</b>`:"")+(c.length?`<b class="g">${c.map(f).join("")}</b>`:"")};
-const selectAct=async ac=>{const f=ac.f.find(x=>x.w==="a"),T=f.cells(0);if(!T.length)return;const j=await pick(0,{cells:T,msg:f.msg+"（別の場所をクリックで取消）",cancel:true});if(j<0){render();return}const k=S.hand[0].indexOf(ac);if(k<0||ac.c>left()){render();return}S.st.push({card:ac,cell:-1,h:k,tg:j});S.hand[0].splice(k,1);S.sel=null;render()};
+const selectAct=async ac=>{const f=ac.f.find(x=>x.w==="a"),T=f.cells(0);if(!T.length)return;const j=f.rnd?0:await pick(0,{cells:T,msg:f.msg+"（別の場所をクリックで取消）",cancel:true});if(j<0){render();return}const k=S.hand[0].indexOf(ac);if(k<0||ac.c>left()){render();return}S.st.push({card:ac,cell:-1,h:k,tg:j});S.hand[0].splice(k,1);S.sel=null;render()};
 async function mulligan(){
   const s=S,H=s.hand[0];s.hand[0]=[];render();
   const face=c=>ibHTML(c,c.p,false);
@@ -119,7 +119,7 @@ const pick=(o,{cells,hand,msg,cancel})=>new Promise(res=>{const L=cells||hand,sy
 document.addEventListener("click",e=>{if(!S.pk)return;if(JD){e.stopPropagation();return}const c=e.target.closest("#board [data-i]"),h=e.target.closest("[data-h]");let v=null;
   if(c&&S.pk.cells&&S.pk.cells.includes(+c.dataset.i))v=+c.dataset.i;else if(h&&S.pk.hand&&S.pk.hand.includes(+h.dataset.h))v=+h.dataset.h;
   if(v===null){if(!S.pk.cancel)return;v=-1}e.stopPropagation();const t=c||h;if(v>=0&&t){const q=t.getBoundingClientRect(),p=document.createElement("i");p.className="rp";p.style.left=q.left+q.width/2+"px";p.style.top=q.top+q.height/2+"px";document.body.appendChild(p);setTimeout(()=>p.remove(),800)}const r=S.pk.res;S.pk=null;$("pp").classList.remove("on");render();r(v)},true);
-const useAct=async s=>{const f=s.card.f.find(x=>x.w==="a");if(!f||!f.cells(s.o).length)return;S.eff=1;showCard(s.card,null,1);castAt(s.o);S.fx=null;render();await sleep(1300);await f.use(s.o,await pick(s.o,{cells:f.cells(s.o),msg:f.msg}));await drainQ();await mq();S.fx=null;render();await sweep()};
+const useAct=async s=>{const f=s.card.f.find(x=>x.w==="a");if(!f||!f.cells(s.o).length)return;S.eff=1;showCard(s.card,null,1);castAt(s.o);S.fx=null;render();await sleep(1300);await f.use(s.o,f.rnd?-1:await pick(s.o,{cells:f.cells(s.o),msg:f.msg}));await drainQ();await mq();S.fx=null;render();await sweep()};
 const drainQ=async()=>{if(S.pd||!S.q)return;while(S.q.length){const c=S.q.shift();if(S.board[c])await onPlace(c)}};
 const fire=async(b,i,f)=>{
   if(f.off)return;const T=f.tg?f.tg(b,i):[];if(f.tg&&!T.length)return;let hv;
@@ -271,7 +271,7 @@ function render(){
   $("sk0").innerHTML=skh(S.stk?S.stk[0]:S.st,0);$("sk1").innerHTML=skh(S.stk?S.stk[1]:[],1);
   $("go").disabled=dis;$("cc").disabled=dis||!S.st.length;
   if(S.over&&!S.paid){S.paid=1;coinAdd(10)}
-  const R=$("res"),k=S.over?(S.res==="あなたの勝ち"?"win":S.res==="CPUの勝ち"?"lose":"draw"):"";if(R.dataset.k!==k){R.dataset.k=k;R.className=k?"on "+k:"";R.textContent=k.toUpperCase()}
+  const R=$("res"),k=S.over?(S.res==="あなたの勝ち"?"win":S.res==="CPUの勝ち"?"lose":"draw"):"";if(R.dataset.k!==k){R.dataset.k=k;R.className=k?"on "+k:"";R.textContent=k.toUpperCase();if(k&&!NET.on){const s0=S;setTimeout(()=>{if(S===s0&&S.over&&!NET.on)$("sres").classList.add("on")},2800)}}
 }
 $("board").onclick=e=>{
   const b=e.target.closest("[data-i]");if(!b||S.over||S.busy)return;
