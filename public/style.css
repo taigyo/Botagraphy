@@ -1492,3 +1492,7 @@ body:has(#hmdt.on) #home>:not(#hmdt),body:has(#dkdt.on) #dkb>:not(#dkdt),body:ha
 .card.ill.ac-dm,.dkc.ill.ac-dm{background-image:url(img/card-ill-ac-dm-83f155.webp)}
 .card.ill.ac-kz,.dkc.ill.ac-kz{background-image:url(img/card-ill-ac-kz-ac29bb.webp)}
 .card.ill.ac-tr,.dkc.ill.ac-tr{background-image:url(img/card-ill-ac-tr-429aeb.webp)}
+
+/* ドクダミのデッキ追加演出 */
+.dfl{position:absolute;width:46px;height:76px;border:2px solid #6dffa8;border-radius:7px;background:#2a5a3a center/cover no-repeat;pointer-events:none;z-index:45}
+.dfl.ac-dm{background-image:url(img/card-ill-ac-dm-83f155.webp)}

@@ -79,7 +79,7 @@ async function commitOld(){
 let PIN=null;
 const actT=(o,c)=>{const f=c.f.find(x=>x.w==="a");return f?f.cells(o):[]};
 const skh=(L,o)=>{const f=s=>o?`<i data-n="${L.indexOf(s)}"></i>`:`<i ${S.stk?"":"data-k=\""+S.st.indexOf(s)+"\""}${ART[s.card.n]?" class=\"ic ic-"+ART[s.card.n]+"\"":""}>${ART[s.card.n]?"":s.card.e}</i>`,a=L.filter(s=>s.cell<0),c=L.filter(s=>s.cell>=0);return(a.length?`<b class="g ac">${a.map(f).join("")}</b>`:"")+(c.length?`<b class="g">${c.map(f).join("")}</b>`:"")};
-const selectAct=async ac=>{const f=ac.f.find(x=>x.w==="a"),T=f.cells(0);if(!T.length)return;const j=await pick(0,{cells:T,msg:f.msg+"（別の場所をクリックで取消）",cancel:true});if(j<0){render();return}const k=S.hand[0].indexOf(ac);if(k<0||ac.c>left()){render();return}S.st.push({card:ac,cell:-1,h:k,tg:j});S.hand[0].splice(k,1);S.sel=null;render()};
+const selectAct=async ac=>{const f=ac.f.find(x=>x.w==="a"),T=f.cells(0);if(!T.length)return;const j=f.rnd?0:await pick(0,{cells:T,msg:f.msg+"（別の場所をクリックで取消）",cancel:true});if(j<0){render();return}const k=S.hand[0].indexOf(ac);if(k<0||ac.c>left()){render();return}S.st.push({card:ac,cell:-1,h:k,tg:j});S.hand[0].splice(k,1);S.sel=null;render()};
 async function mulligan(){
   const s=S,H=s.hand[0];s.hand[0]=[];render();
   const face=c=>ibHTML(c,c.p,false);
@@ -119,7 +119,7 @@ const pick=(o,{cells,hand,msg,cancel})=>new Promise(res=>{const L=cells||hand,sy
 document.addEventListener("click",e=>{if(!S.pk)return;if(JD){e.stopPropagation();return}const c=e.target.closest("#board [data-i]"),h=e.target.closest("[data-h]");let v=null;
   if(c&&S.pk.cells&&S.pk.cells.includes(+c.dataset.i))v=+c.dataset.i;else if(h&&S.pk.hand&&S.pk.hand.includes(+h.dataset.h))v=+h.dataset.h;
   if(v===null){if(!S.pk.cancel)return;v=-1}e.stopPropagation();const t=c||h;if(v>=0&&t){const q=t.getBoundingClientRect(),p=document.createElement("i");p.className="rp";p.style.left=q.left+q.width/2+"px";p.style.top=q.top+q.height/2+"px";document.body.appendChild(p);setTimeout(()=>p.remove(),800)}const r=S.pk.res;S.pk=null;$("pp").classList.remove("on");render();r(v)},true);
-const useAct=async s=>{const f=s.card.f.find(x=>x.w==="a");if(!f||!f.cells(s.o).length)return;S.eff=1;showCard(s.card,null,1);castAt(s.o);S.fx=null;render();await sleep(1300);await f.use(s.o,await pick(s.o,{cells:f.cells(s.o),msg:f.msg}));await drainQ();await mq();S.fx=null;render();await sweep()};
+const useAct=async s=>{const f=s.card.f.find(x=>x.w==="a");if(!f||!f.cells(s.o).length)return;S.eff=1;showCard(s.card,null,1);castAt(s.o);S.fx=null;render();await sleep(1300);await f.use(s.o,f.rnd?-1:await pick(s.o,{cells:f.cells(s.o),msg:f.msg}));await drainQ();await mq();S.fx=null;render();await sweep()};
 const drainQ=async()=>{if(S.pd||!S.q)return;while(S.q.length){const c=S.q.shift();if(S.board[c])await onPlace(c)}};
 const fire=async(b,i,f)=>{
   if(f.off)return;const T=f.tg?f.tg(b,i):[];if(f.tg&&!T.length)return;let hv;
