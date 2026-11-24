@@ -1521,3 +1521,16 @@ body:has(#hmdt.on) #home>:not(#hmdt),body:has(#dkdt.on) #dkb>:not(#dkdt),body:ha
 @media (max-width:760px){.bmcols{flex-direction:column;overflow:auto}.bmc{max-width:none;flex:none;max-height:46vh}}
 #sres{position:fixed;left:50%;bottom:7vh;transform:translate(-50%,24px);z-index:95;display:flex;gap:14px;opacity:0;pointer-events:none;transition:opacity .6s,transform .6s}
 #sres.on{opacity:1;transform:translate(-50%,0);pointer-events:auto;transition-duration:.4s}
+
+/* 対戦設定：CPUの強さ（連続値 BM.lv を3つの目安ボタン＋グラデのバーで表示） */
+.bmlv{flex:none;max-width:none;width:min(520px,100%);margin:10px auto 0;padding:10px 16px 12px}
+.bmlvs{display:flex;gap:10px;justify-content:center}.bmlvs .bmd{flex:1;justify-content:center;text-align:center}
+.bmlb{position:relative;height:10px;margin:12px 6px 4px;border-radius:9px;background:linear-gradient(90deg,#bfeccf,#f6e6a8,#f3b0a0);box-shadow:inset 0 0 0 1px #0a3a2a1a}
+.bmlb i{position:absolute;top:50%;left:calc(var(--v)*100%);width:20px;height:20px;border-radius:50%;transform:translate(-50%,-50%);background:linear-gradient(160deg,#fff,#e6f6ec);box-shadow:0 2px 6px #0a3a2a44,inset 0 0 0 2px #52c184;transition:left .5s cubic-bezier(.3,.7,.2,1)}
+
+/* ソロステージ：バトル設定の3枚目のカード・結果パネル */
+#bsc3{animation-delay:.24s}
+#bsc3 .bsfr{background:linear-gradient(160deg,#d8f09a,#9fcf50 55%,#6aa83a)}
+#sres{flex-wrap:wrap;justify-content:center}
+#sresm{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:14px;white-space:nowrap;padding:8px 22px;border-radius:20px;font-size:16px;letter-spacing:.1em;color:#1f4a35;background:linear-gradient(135deg,#fffbe0,#e6f6ec);box-shadow:0 3px 10px #0a3a2a2a,inset 0 0 0 2px #cfeadb}
+#sresm:empty{display:none}

@@ -2,9 +2,9 @@ const $=i=>document.getElementById(i),rnd=n=>Math.floor(Math.random()*n),sleep=m
 const dr=o=>{const c=S.deck[o].pop();if(c&&S.hand[o].length<7){c.nw=Date.now();S.hand[o].push(c)}else if(c&&o===0)setTimeout(()=>vanish2(c),600)};
 const ar=i=>(i>=18?2:0)+(i%6>=3?1:0);
 let S;
-function init(){$("pp").classList.remove("on");$("sres").classList.remove("on");const og=$("mg");if(og)og.remove();
+function init(){$("pp").classList.remove("on");$("sres").classList.remove("on");if(typeof stageUi==="function")stageUi();const og=$("mg");if(og)og.remove();
   const win=Math.max(1,Math.min(20,+$("win").value||5));$("win").value=win;
-  S={win,max:win*3,turn:0,mana:[0,0],hand:[[],[]],board:Array(36).fill(null),pts:[0,0],st:[],sel:null,over:false,busy:false,log:"",res:"",hide:new Set(),fx:null,jq:[],pop:null,ini:0,nm:[0,0],stk:null,deck:[myDeck(BM.my||ACT),BM.cpu==="preset"||!DKS.some(d=>d.id===BM.cpu)?mkDeck("f").filter(c=>c.m!==0):myDeck(BM.cpu)]};
+  S={win,max:win*3,turn:0,mana:[0,0],hand:[[],[]],board:Array(36).fill(null),pts:[0,0],st:[],sel:null,over:false,busy:false,log:"",res:"",hide:new Set(),fx:null,jq:[],pop:null,ini:0,nm:[0,0],stk:null,lv:[.5,Math.max(0,Math.min(1,BM.st?BM.st.lv:BM.lv==null?.5:BM.lv))],deck:[myDeck(BM.my||ACT),BM.st?stageDeck(BM.st):BM.cpu==="preset"||!DKS.some(d=>d.id===BM.cpu)?mkDeck("f").filter(c=>c.m!==0):myDeck(BM.cpu)]};
   const MN=[0,1].map(o=>S.deck[o].find(c=>c.m===1));for(let i=0;i<3;i++){dr(0);dr(1)}
   const s0=S;S.busy=true;mulligan().then(()=>{if(S!==s0)return;const tkf=o=>CARDS.find(c=>c.n===(MN[o]&&MN[o].tk||"牡丹のはなびら"));S.hand[0].push({...tkf(0),nw:Date.now()});S.hand[1].push({...tkf(1)});S.busy=false;next()});
 }
@@ -16,19 +16,7 @@ async function next(){
 const left=()=>S.mana[0]-S.st.reduce((a,s)=>a+s.card.c,0);
 function sums(){const s=[[0,0],[0,0],[0,0],[0,0]];S.board.forEach((b,i)=>{if(b)s[ar(i)][b.o]+=pw(b,i)});return s}
 function wins(){return sums().map(([a,b])=>a>b?0:b>a?1:2)}
-function cpu(){
-  let rem=S.mana[1],plan=[];const w=wins();
-  [...S.hand[1]].sort(()=>Math.random()-.5).forEach(card=>{
-    if(card.c>rem||Math.random()>.85)return;
-    if(isAct(card)){const T=actT(1,card);if(!T.length)return;plan.push({card,cell:-1,tg:T[rnd(T.length)]});rem-=card.c;S.hand[1].splice(S.hand[1].indexOf(card),1);return}
-    const em=S.board.map((b,i)=>b||plan.some(p=>p.cell===i)?-1:i).filter(i=>i>=0);
-    if(!em.length)return;
-    const wt=em.map(i=>w[ar(i)]===0?3:w[ar(i)]===2?2:1),tot=wt.reduce((a,b)=>a+b);
-    let r=Math.random()*tot,k=0;while(r>wt[k]){r-=wt[k];k++}
-    plan.push({card,cell:em[k]});rem-=card.c;S.hand[1].splice(S.hand[1].indexOf(card),1);
-  });
-  return plan;
-}
+/* CPUの思考は js/10-cpu.js（cpu()・aiPlan・cpuPick） */
 async function commitOld(){
   if(S.over||S.busy)return;
   S.busy=true;S.mg=[0,0];
@@ -115,7 +103,7 @@ const rm=async(ix,gs)=>{ix=ix.filter(i=>S.board[i]);if(!ix.length)return[];
  render();for(const[x,j,f,i]of tr)if(S.board[j]===x)await fire(x,j,f.run?{s:f.s,k:f.k||"up",run:(b,jj)=>f.run(b,jj,i)}:{s:"+1マナ",k:"up",run:()=>{gm(x.o,1)}});
  for(const[b,i,f]of dd)await fire(b,i,{s:f.s,k:f.k||"up",run:()=>f.run(b)});return ix};
 const isAct=c=>!!c&&c.a.includes("アクション");
-const pick=(o,{cells,hand,msg,cancel})=>new Promise(res=>{const L=cells||hand,sync=NET.on&&S.busy;if(o===1){if(sync)return netWait("choice").then(res);return res(L[rnd(L.length)])}S.pk={cells,hand,res:sync?v=>{netSend({k:"ch",v});res(v)}:res,cancel};$("pp").textContent=msg;$("pp").classList.add("on");render()});
+const pick=(o,{cells,hand,msg,cancel})=>new Promise(res=>{const L=cells||hand,sync=NET.on&&S.busy;if(o===1||S.bot0){if(sync)return netWait("choice").then(res);return res(cpuPick(o,L,{cells,hand,msg}))}S.pk={cells,hand,res:sync?v=>{netSend({k:"ch",v});res(v)}:res,cancel};$("pp").textContent=msg;$("pp").classList.add("on");render()});
 document.addEventListener("click",e=>{if(!S.pk)return;if(JD){e.stopPropagation();return}const c=e.target.closest("#board [data-i]"),h=e.target.closest("[data-h]");let v=null;
   if(c&&S.pk.cells&&S.pk.cells.includes(+c.dataset.i))v=+c.dataset.i;else if(h&&S.pk.hand&&S.pk.hand.includes(+h.dataset.h))v=+h.dataset.h;
   if(v===null){if(!S.pk.cancel)return;v=-1}e.stopPropagation();const t=c||h;if(v>=0&&t){const q=t.getBoundingClientRect(),p=document.createElement("i");p.className="rp";p.style.left=q.left+q.width/2+"px";p.style.top=q.top+q.height/2+"px";document.body.appendChild(p);setTimeout(()=>p.remove(),800)}const r=S.pk.res;S.pk=null;$("pp").classList.remove("on");render();r(v)},true);
@@ -173,7 +161,7 @@ async function commit(){
   if(over){
     const t=sm.reduce((a,[x,y])=>[a[0]+x,a[1]+y],[0,0]);
     let r="引き分け";for(const[x,y]of[S.pts,[c0,c1],t]){if(x!==y){r=x>y?"あなたの勝ち":"CPUの勝ち";break}}
-    S.over=true;S.res=r;S.busy=false;render();finale(r);
+    S.over=true;S.res=r;S.busy=false;render();finale(r);if(BM.st)stageEnd(r);
   }else{S.busy=false;next()}
 }
 function jig(big){const el=document.querySelector(".dp");if(!big&&el._a&&el._a.playState==="running")return;
