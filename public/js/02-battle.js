@@ -7,7 +7,7 @@ const OWN=o=>o===0?"あなた":OPN(),cellN=i=>`${AN[ar(i)]}エリア・${(i/6|0)
 const LG=(k,o,h)=>{if(!S)return;(S.lg||(S.lg=[])).push({t:S.turn,k,o,h:esc(h)});if(typeof lgLive==="function")lgLive()};
 const lgArea=(sm,w)=>LG("area",-1,"エリア判定　"+AN.map((a,i)=>`${a} ${sm[i][0]}–${sm[i][1]}${w[i]===0?"◯":w[i]===1?"●":"△"}`).join("　"));
 /* 対戦を今すぐ終わらせる（降参・不戦勝）。進行中の演出は sleep が止まるので、そのまま止まる */
-function forceEnd(res,msg,o){if(!S||S.over)return false;o=o||{};S.halt=1;S.over=true;S.res=res;S.busy=false;
+function forceEnd(res,msg,o){if(!S||S.over)return false;o=o||{};S.halt=1;S.oPend=0;S.over=true;S.res=res;S.busy=false;
   if(S.pk){S.pk=null;$("pp").classList.remove("on")}
   S.fx=null;S.hide.clear();S.stk=null;S.eff=0;S.jq=[];S.sel=null;
   if(S.st.length){[...S.st].sort((a,b)=>a.h-b.h).forEach(s=>S.hand[0].splice(Math.min(s.h,S.hand[0].length),0,s.card));S.st=[]}
@@ -145,13 +145,13 @@ async function commit(){
   if(S.over||S.busy)return;
   S.busy=true;S.mg=[0,0];S.ppl=[];render();
   const all=[...S.st.map(s=>({...s,o:0})),...(NET.on?await netPlans():cpu()).map(s=>({...s,o:1}))];
-  S.st=[];if(NET.on)NET.pr=mul(NET.seed^Math.imul(S.turn+1,0x9E3779B1));all.forEach(s=>{S.mana[s.o]-=s.card.c;S.hide.add(s.cell)});S.ppl=all.filter(s=>s.cell>=0).map(s=>[s.cell,s.o]);
+  S.st=[];S.oPend=all.filter(s=>s.o===1).length;if(NET.on)NET.pr=mul(NET.seed^Math.imul(S.turn+1,0x9E3779B1));all.forEach(s=>{S.mana[s.o]-=s.card.c;S.hide.add(s.cell)});S.ppl=all.filter(s=>s.cell>=0).map(s=>[s.cell,s.o]);
   S.stk=[all.filter(s=>s.o===0),[]];render();await battle();const th=all.filter(s=>s.o===1);for(let k=0;k<th.length;k++){S.stk=[S.stk[0],th.slice(0,k+1)];render();const e=document.querySelector('#sk1 [data-n="'+k+'"]');if(e)e.animate(SKIN,{duration:620,easing:"cubic-bezier(.2,.85,.25,1)"});await sleep(380)}await sleep(450);
-  const sd=NET.on?relO(NET.pr()<.5?0:1):(Math.random()<.5?0:1);for(const s of[...all.filter(s=>s.cell<0&&s.o===sd),...all.filter(s=>s.cell<0&&s.o!==sd)]){S.stk=S.stk.map(L=>L.filter(x=>x!==s));await useAct(s)}
+  const sd=NET.on?relO(NET.pr()<.5?0:1):(Math.random()<.5?0:1);for(const s of[...all.filter(s=>s.cell<0&&s.o===sd),...all.filter(s=>s.cell<0&&s.o!==sd)]){S.stk=S.stk.map(L=>L.filter(x=>x!==s));if(s.o===1){S.oPend--;render()}await useAct(s)}
   const cs=[...new Set(all.filter(s=>s.cell>=0).map(s=>s.cell))].sort((a,b)=>a-b);S.pend=new Set(cs);S.q=[];S.pl={};all.forEach(s=>{if(s.cell>=0)(S.pl[s.cell]=S.pl[s.cell]||[]).push(s.o)});
   for(const cell of cs){S.pend.delete(cell);delete S.pl[cell];const oc=S.board[cell];S.board[cell]=null;const cp=s=>s.b?pw(s.b,cell):s.card.p;
     const l=[...(oc?[{o:oc.o,card:oc.card,b:oc,ex:1}]:[]),...all.filter(s=>s.cell===cell)];let win=l[0];if(l.length===1)LG("put",l[0].o,`${l[0].card.n} を ${cellN(cell)} に配置`);
-    S.stk=S.stk.map(L=>L.filter(s=>!l.includes(s)));
+    S.stk=S.stk.map(L=>L.filter(s=>!l.includes(s)));S.oPend-=l.filter(s=>s.o===1&&!s.ex).length;
     if(l.length>1){
       const[a,b]=l[0].o===0?l:[l[1],l[0]];win=cp(a)>cp(b)?a:cp(b)>cp(a)?b:null;LG("clash",-1,`${cellN(cell)}で衝突：${OWN(a.o)}の${a.card.n}(${cp(a)}) ⚔ ${OWN(b.o)}の${b.card.n}(${cp(b)}) → ${win?OWN(win.o)+"の"+win.card.n+"が勝ち":"相打ち（どちらも消える）"}`);
       l.forEach(s=>{if(s!==win&&!s.ex)S.mana[s.o]+=s.card.c});
@@ -160,7 +160,7 @@ async function commit(){
     S.hide.delete(cell);if(win)S.board[cell]=win.b||{o:win.o,card:win.card};S.eff=1;if(win){const bb=S.board[cell];showCard(bb.card,pw(bb,cell),1)}
     S.fx={cell,k:"drop",gone};render();await sleep(win?1500:1350);
     if(win&&!win.ex)await onPlace(cell)}
-  S.fx=null;S.hide.clear();S.stk=null;S.eff=0;if(!PIN)info.classList.remove("on");finfo.classList.remove("on");render();await sleep(300);
+  S.oPend=0;S.fx=null;S.hide.clear();S.stk=null;S.eff=0;if(!PIN)info.classList.remove("on");finfo.classList.remove("on");render();await sleep(300);
   const sm=sums(),w=wins();
   for(let i=0;i<4;i++){S.jq[i]={t:`${sm[i][0]}–${sm[i][1]}`,w:w[i],n:true};render();areaAt(i,w[i]);await sleep(750)}
   const c0=w.filter(x=>x===0).length,c1=w.filter(x=>x===1).length;
@@ -203,7 +203,7 @@ function areaAt(a,w){if(RM)return;const r0=(a>>1)*3,c0=(a&1)*3,e1=document.query
   const p=e1.getBoundingClientRect(),q=e2.getBoundingClientRect(),L=p.left,T=p.top,W=q.right-L,H=q.bottom-T,win=w===0||w===1,col=w===0?"#6dffa8":w===1?"#ff8fb0":"#cfd8d2";
   puff(mkI("aw",`left:${L}px;top:${T}px;width:${W}px;height:${H}px;background:radial-gradient(ellipse at 50% 50%,${col}99,${col}00 72%)`),[{opacity:0,transform:"scale(.85)"},{opacity:1,offset:.3},{opacity:0,transform:"scale(1.08)"}],{duration:1500,easing:"ease-out"});
   if(!win)return;
-  puff(mkI("as",`left:${L}px;top:${T}px;width:${W*.45}px;height:${H}px`),[{transform:`translateX(${-W*.5}px)`,opacity:0},{opacity:.8,offset:.4},{transform:`translateX(${W*1.05}px)`,opacity:0}],{duration:1100,easing:"ease-in-out"});
+  {const wr=mkI("ac",`left:${L}px;top:${T}px;width:${W}px;height:${H}px;overflow:hidden;border-radius:10px`),sw=mkI("as",`left:0;top:0;width:${W*.45}px;height:${H}px`);wr.appendChild(sw);puff(wr,[{opacity:1},{opacity:1}],{duration:1100});sw.animate([{transform:`translateX(${-W*.5}px)`,opacity:0},{opacity:.8,offset:.4},{transform:`translateX(${W*1.05}px)`,opacity:0}],{duration:1100,easing:"ease-in-out"})}
   for(let k=0;k<16;k++){const s=Math.random()<.5?-1:1;puff(mkI(w?"pt":"lf",`left:${L+Math.random()*W}px;top:${T+H*(.4+Math.random()*.6)}px`),[{transform:"translate(0,0) rotate(0) scale(.4)",opacity:0},{opacity:1,offset:.2},{transform:`translate(${s*30}px,${-H*.35}px) rotate(${s*240}deg) scale(1.1)`,opacity:1,offset:.6},{transform:`translate(${-s*20}px,${-H*.7}px) rotate(${s*500}deg) scale(.7)`,opacity:0}],{duration:1300+Math.random()*500,delay:Math.random()*500,easing:"ease-out",fill:"backwards"})}}
 function flyPt(o){if(RM)return;const b=$("board").getBoundingClientRect(),t=$(o?"gr":"gl").getBoundingClientRect(),x0=b.left+b.width/2,y0=b.top+b.height/2,x1=t.left+t.width/2,y1=t.top+t.height/2,dx=x1-x0,dy=y1-y0,col=o?"#ff8fb0":"#6dffa8";
   for(let k=0;k<10;k++){const s=(k%2?1:-1)*(40+Math.random()*60);puff(mkI(o?"pt":"lf",`left:${x0+(Math.random()-.5)*b.width*.3}px;top:${y0+(Math.random()-.5)*b.height*.3}px`),[{transform:"translate(0,0) scale(.4) rotate(0)",opacity:0},{opacity:1,offset:.15},{transform:`translate(${dx*.5+s}px,${dy*.5-60}px) scale(1.3) rotate(${s*4}deg)`,offset:.55},{transform:`translate(${dx}px,${dy}px) scale(.6) rotate(${s*8}deg)`,opacity:.9}],{duration:900+Math.random()*300,delay:k*60,easing:"cubic-bezier(.4,.1,.3,1)",fill:"backwards"})}
@@ -266,6 +266,10 @@ function render(){
   const hn=S.hand[0].length,stp=hn>1?Math.min([0,0,142,126,116,108,102,96][hn]||96,780/(hn-1)):0;
   const D=c=>c.c>left()||dis||(isAct(c)&&!actT(0,c).length),prevD=new Set(DIS);DIS.clear();S.hand[0].forEach(c=>{if(D(c))DIS.add(c)});
   $("hand").innerHTML=S.hand[0].map((c,i)=>{const m=i-(hn-1)/2,hx=m*stp,hy=m*m*2.4,hr=m*4,pv=HPOS.get(c),mv=pv&&!(c.nw&&Date.now()-c.nw<1800)&&(Math.abs(pv.x-hx)>.5||Math.abs(pv.y-hy)>.5||Math.abs(pv.r-hr)>.3);HPOS.set(c,{x:hx,y:hy,r:hr});return`<button class="card${ART[c.n]?" ill ac-"+ART[c.n]:""}${mv?" mv":""}${S.sel===i?" on":""}${S.pk&&S.pk.hand&&S.pk.hand.includes(i)?" pk":""}${c.nw&&Date.now()-c.nw<1800?" nw":""}" data-h="${i}" style="${mv?`--x0:${pv.x.toFixed(1)}px;--y0:${pv.y.toFixed(1)}px;--r0:${pv.r.toFixed(1)}deg;`:""}--x:${(m*stp).toFixed(1)}px;--y:${(m*m*2.4).toFixed(1)}px;--r:${(m*4).toFixed(1)}deg;z-index:${i};animation-delay:${(i*.09-(c.nw?(Date.now()-c.nw)/1000:0)).toFixed(2)}s;--ac:${c.d==="f"?"#f4a6c0":"#8ccf9c"}" ${DIS.has(c)?(prevD.has(c)?"data-dis":"data-dis data-fd"):""}><b>${c.c}</b><i class="em">${c.e}</i><em>${c.n}</em><span class="tx"><span>${c.t}</span></span><small>${c.p==null?"✦":c.p}</small></button>`}).join("");
+  {const n=S.turn>0?S.hand[1].length+(S.oPend||0):0,pc=S.ohc||0,T=S.ohT||(S.ohT=[]),P=S.ohP||(S.ohP=[]),stp=n>1?Math.min(52,320/(n-1)):0,now=Date.now();
+    for(let i=pc;i<n;i++)T[i]=now;T.length=n;S.ohc=n;
+    $("oh").innerHTML=Array.from({length:n},(_,i)=>{const m=i-(n-1)/2,x=m*stp,y=-m*m*2.4,r=-m*4,pv=P[i],nf=T[i]&&now-T[i]<1800,mv=pv&&!nf&&(Math.abs(pv.x-x)>.5||Math.abs(pv.y-y)>.5||Math.abs(pv.r-r)>.3);P[i]={x,y,r};
+      return`<i class="oc${nf?" nw":""}${mv?" mv":""}" style="${mv?`--x0:${pv.x.toFixed(1)}px;--y0:${pv.y.toFixed(1)}px;--r0:${pv.r.toFixed(1)}deg;`:""}--x:${x.toFixed(1)}px;--y:${y.toFixed(1)}px;--r:${r.toFixed(1)}deg;z-index:${i};animation-delay:${(i*.09-(nf?(now-T[i])/1000:0)).toFixed(2)}s"></i>`}).join("");P.length=n}
   if(S.fx&&!S.fx.fd){S.fx.fd=1;if(S.fx.k==="drop")windAt(S.fx.cell);else if(S.fx.k==="clash"&&/⚔/.test(S.fx.txt))clashAt(S.fx.cell)}
   $("end").textContent="";
   $("sk0").innerHTML=skh(S.stk?S.stk[0]:S.st,0);$("sk1").innerHTML=skh(S.stk?S.stk[1]:[],1);
