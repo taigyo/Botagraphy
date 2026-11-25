@@ -16,6 +16,7 @@ const json = (o, s = 200) =>
   new Response(JSON.stringify(o), { status: s, headers: { "content-type": "application/json", "cache-control": "no-store" } });
 const send = (ws, o) => { try { ws.send(JSON.stringify(o)); } catch {} };
 const clean = (s, n = 24) => String(s ?? "").replace(/[\u0000-\u001f<>]/g, "").slice(0, n);
+const cleanIcon = (s) => (/^(c:[a-z0-9]{2}|e:[^\u0000-\u001f<>]{1,8})$/u.test(String(s ?? "")) ? String(s) : "");
 const isWs = (req) => req.headers.get("Upgrade") === "websocket";
 
 async function newRoom(env) {
@@ -136,7 +137,7 @@ export class Room extends DurableObject {
   async broadcast() {
     const seats = (await this.ctx.storage.get("seats")) || [null, null];
     const phase = await this.ctx.storage.get("phase");
-    const players = seats.map((p, i) => p && { side: i, name: p.name, deck: p.deck, ready: p.ready, rm: !!p.rm, online: this.live(p.pid).length > 0 });
+    const players = seats.map((p, i) => p && { side: i, name: p.name, icon: p.icon || "", title: p.title || "", deck: p.deck, ready: p.ready, rm: !!p.rm, online: this.live(p.pid).length > 0 });
     for (const w of this.ctx.getWebSockets()) {
       const a = w.deserializeAttachment() || {};
       if (a.side >= 0) send(w, { t: "state", phase, you: a.side, players });
@@ -156,10 +157,12 @@ export class Room extends DurableObject {
         if (phase !== "lobby") return send(ws, { t: "err", msg: "このルームはすでに対戦中です。" }), ws.close(1000, "busy");
         idx = seats.findIndex((p) => !p);
         if (idx < 0) return send(ws, { t: "err", msg: "このルームは満員です。" }), ws.close(1000, "full");
-        seats[idx] = { pid, name: clean(m.name, 12) || "プレイヤー", deck: clean(m.deck), ready: false };
+        seats[idx] = { pid, name: clean(m.name, 12) || "プレイヤー", icon: cleanIcon(m.icon), title: clean(m.title, 12), deck: clean(m.deck), ready: false };
       } else {
         seats[idx].name = clean(m.name, 12) || seats[idx].name;
         seats[idx].deck = clean(m.deck) || seats[idx].deck;
+        seats[idx].icon = cleanIcon(m.icon) || seats[idx].icon;
+        seats[idx].title = m.title === undefined ? seats[idx].title : clean(m.title, 12);
       }
       for (const w of this.live(pid)) if (w !== ws) { send(w, { t: "err", msg: "別の画面で入室されました。" }); w.close(4001, "replaced"); }
       ws.serializeAttachment({ pid, side: idx });

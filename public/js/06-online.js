@@ -5,7 +5,7 @@ const NET={on:false,you:0,seed:0,ack:0,q:{},w:{},sums:{},mine:{},sent:[],nw:0,nw
 const mul=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
 const prnd=n=>NET.on?Math.floor(NET.pr()*n):rnd(n);
 const absO=o=>o===0?NET.you:1-NET.you,relO=a=>a===NET.you?0:1;
-const OPN=()=>NET.on?(NET.opp||"相手"):"CPU";
+const OPN=()=>NET.on?(NET.opp||"相手"):(S&&S.who&&S.who[1]?S.who[1].name:"CPU");
 const PH=()=>({hid:1,n:"?",e:"❓",c:0,p:0,a:[],f:[],d:"f"});
 const hashStr=x=>{let h=2166136261;for(let i=0;i<x.length;i++){h^=x.charCodeAt(i);h=Math.imul(h,16777619)}return(h>>>0).toString(36)};
 function netOut(o){NET.sent.push(o);netFlush(o)}
@@ -31,9 +31,9 @@ function netRecv(m){
   if(m.q&&m.q<=NET.ack)return;if(m.q)NET.ack=m.q;
   if(m.t==="plans")netPush("plans:"+m.turn,m.p);
   else if(m.t==="opp_left"){if(NET.on){if(S&&S.over){NET.oppGone=1;netEndUpdate()}else netForfeitWin("相手が退室しました")}}
-  else{const d=m.d||{};if(d.k==="ch")netPush("choice",d.v);else if(d.k==="out")netPush("out",d.v);else if(d.k==="mull")netPush("mull",1);else if(d.k==="sum"){NET.sums[d.t]=d.h;netCheck(d.t)}}
+  else{const d=m.d||{};if(d.k==="ch")netPush("choice",d.v);else if(d.k==="out")netPush("out",d.v);else if(d.k==="mull")netPush("mull",1);else if(d.k==="ff"){if(NET.on&&S&&!S.over){LG("end",1,"降参しました");forceEnd("あなたの勝ち",OPN()+"が降参しました");netOut({t:"done"})}}else if(d.k==="sum"){NET.sums[d.t]=d.h;netCheck(d.t)}}
 }
-function netState(m){const op=m.players[1-m.you];NET.opp=op?op.name:NET.opp;NET.off=op&&op.online===false?(NET.off||Date.now()):0;netEndUpdate()}
+function netState(m){const op=m.players[1-m.you];NET.opp=op?op.name:NET.opp;if(S&&S.who&&NET.on&&typeof bui==="function")bui(1);NET.off=op&&op.online===false?(NET.off||Date.now()):0;netEndUpdate()}
 function netStartGame(g){ON.go=g;onl.classList.remove("on");initOnline(g)}
 function initOnline(g){
   $("pp").classList.remove("on");const og=$("mg");if(og)og.remove();
@@ -42,19 +42,20 @@ function initOnline(g){
   NET.pr=mul(g.seed);
   $("bset").classList.remove("on");$("bmat").classList.remove("on");$("home").classList.remove("on");started=true;document.body.classList.add("net");
   const mine=myDeck(ON.dk);
-  S={win:5,max:15,turn:0,mana:[0,0],hand:[[],[]],board:Array(36).fill(null),pts:[0,0],st:[],sel:null,over:false,busy:false,log:"",res:"",hide:new Set(),fx:null,jq:[],pop:null,ini:0,nm:[0,0],stk:null,deck:[mine,mine.map(PH)]};
+  S={win:5,max:15,turn:0,mana:[0,0],hand:[[],[]],board:Array(36).fill(null),pts:[0,0],st:[],sel:null,over:false,busy:false,log:"",res:"",hide:new Set(),fx:null,jq:[],pop:null,ini:0,nm:[0,0],stk:null,lg:[],deck:[mine,mine.map(PH)]};
+  if(typeof bui==="function")bui();
   const MN0=S.deck[0].find(c=>c.m===1);for(let i=0;i<3;i++){dr(0);dr(1)}
   const s0=S;S.busy=true;
   mulligan().then(async()=>{if(S!==s0)return;const tk=CARDS.find(c=>c.n===(MN0&&MN0.tk||"牡丹のはなびら"));S.hand[0].push({...tk,nw:Date.now()});S.hand[1].push(PH());netSend({k:"mull"});await netWait("mull");if(S!==s0)return;S.busy=false;next()});
 }
-function netForfeitWin(msg){if(!NET.on||NET.dead||!S||S.over)return;NET.oppGone=1;NET.dead=true;S.over=true;S.res="あなたの勝ち";S.busy=false;S.log=msg+"（不戦勝）";render();finale("あなたの勝ち");netBanner("")}
+function netForfeitWin(msg){if(!NET.on||NET.dead||!S||S.over)return;NET.oppGone=1;NET.dead=true;LG("end",-1,msg+"（不戦勝）");forceEnd("あなたの勝ち",msg+"（不戦勝）");netBanner("")}
 function netLeave(){if(NET.on){netFlush({t:"leave"})}NE.style.display="none";NE.dataset.on="";NET.on=false;NET.dead=true;ON.bye=1;try{ON.ws&&ON.ws.close()}catch{}ON.ws=null;document.body.classList.remove("net");netBanner("")}
 function netReconnect(){
   if(NET.rc||!NET.on||NET.dead)return;NET.rc=1;let n=0;
   const go=()=>{if(!NET.on||ON.bye||NET.dead){NET.rc=0;return}if(++n>40){NET.rc=0;netBanner("接続できません。ホームに戻ってください。");return}
     netBanner("再接続中…");
     const w=wsOpen("/ws/room/"+ON.room,onRoomMsg,()=>{if(ON.ws===w&&!ON.bye)setTimeout(go,2000)});ON.ws=w;
-    w.onopen=()=>{NET.rc=0;netBanner("");w.send(JSON.stringify({t:"hello",pid:PID,name:PNAME,deck:deckLabel(),ack:NET.ack}));NET.sent.forEach(netFlush)};
+    w.onopen=()=>{NET.rc=0;netBanner("");w.send(JSON.stringify({t:"hello",pid:PID,name:PNAME,icon:PROF.icon,title:PROF.title,deck:deckLabel(),ack:NET.ack}));NET.sent.forEach(netFlush)};
   };go();
 }
 
@@ -82,7 +83,6 @@ setInterval(()=>{
   else if(NET.nw>0&&now-NET.nwt>400&&!S.over)netBanner(NET.wk&&NET.wk.startsWith("plans")?"相手の確定を待っています…":NET.wk==="choice"?"相手が選択中です…（最大"+NET.psec+"秒）":"相手の操作を待っています…");
   else if(nbTxt!=="")netBanner("");
 },250);
-$("hm").onclick=()=>{netLeave();homeOpen()};
 
 (()=>{const hide=()=>{const l=document.getElementById("ld");if(!l)return;l.classList.add("out");setTimeout(()=>l.remove(),1000)};
  const loaded=new Promise(r=>document.readyState==="complete"?r():addEventListener("load",r));

@@ -107,7 +107,7 @@ function onRoomMsg(m){
 function connectRoom(code,via,onfail){
   ON.via=via;ON.room=code;ON.st=null;ON.go=null;ON.log=[];ON.bye=0;ON.onfail=onfail;NET.ack=0;NET.on=false;
   const w=wsOpen("/ws/room/"+code,onRoomMsg,o=>{if(ON.ws!==w||ON.bye)return;if(NET.on)netReconnect();else errView(o?"接続が切れました。":"サーバーに接続できませんでした。")});
-  ON.ws=w;w.onopen=()=>w.send(JSON.stringify({t:"hello",pid:PID,name:PNAME,deck:deckLabel(),ack:0}));
+  ON.ws=w;w.onopen=()=>w.send(JSON.stringify({t:"hello",pid:PID,name:PNAME,icon:PROF.icon,title:PROF.title,deck:deckLabel(),ack:0}));
 }
 const slot=(p,me)=>`<div class="osl${p?" on":""}${me?" me":""}"><b>${me?"あなた":"相手"}</b><span>${p?esc(p.name):"待機中…"}</span><em>${p?esc(p.deck||"")+(p.online===false?"（切断中）":""):"&nbsp;"}</em><i>${p&&p.ready?"✔ 準備OK":""}</i></div>`;
 function lobbyView(){const s=ON.st;if(!s)return;const me=s.players[s.you],op=s.players[1-s.you],both=!!(me&&op),room=ON.via!=="random";

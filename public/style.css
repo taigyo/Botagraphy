@@ -6,8 +6,6 @@ body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.5 "Hiragino Maru 
 main{max-width:none;margin:0}
 input,button{font:inherit;color:var(--tx);background:var(--pn);border:1px solid var(--ln);border-radius:8px;padding:6px 10px}
 input{width:3.2em}
-.top{display:flex;gap:8px;align-items:center;justify-content:space-between}
-.bar{display:flex;justify-content:space-between;align-items:center;font-weight:700}
 .me{color:var(--me)}
 .cp{color:var(--cp)}
 #bw{position:relative}
@@ -50,7 +48,7 @@ input{width:3.2em}
 #end{margin-top:10px;font-weight:700}
 #field{overflow:hidden;isolation:isolate}
 #field::before{content:"";position:absolute;inset:0;z-index:-1;background:url(img/field-before-123c67.jpg) center/cover no-repeat;transform:scale(1.07);filter:none}
-#field .top,#field .bar,#areas{background:color-mix(in srgb,var(--pn) 84%,transparent);border-radius:10px;padding:4px 10px}
+#areas{background:color-mix(in srgb,var(--pn) 84%,transparent);border-radius:10px;padding:4px 10px}
 #bw{transform:perspective(1200px) rotateX(26deg);transform-origin:50% 100%;filter:drop-shadow(0 14px 8px #0006)}
 #arrow{position:fixed;left:0;top:0;width:100vw;height:100vh;pointer-events:none;z-index:99}
 #arrow path{fill:color-mix(in srgb,var(--me) 85%,#fff);stroke:#fff;stroke-width:3;stroke-linejoin:round;opacity:.93;filter:drop-shadow(0 4px 6px #0006)}
@@ -59,7 +57,6 @@ input{width:3.2em}
 main>:not(#field){box-sizing:border-box;max-width:900px;margin-left:auto;margin-right:auto;padding-left:18px;padding-right:18px}
 main{height:100vh;display:flex;flex-direction:column;padding:0;overflow:hidden}
 #field{flex:1;min-height:0;padding:8px 18px 6px}
-.bar{margin:4px 0}
 #areas{margin:4px auto}
 #field>#bw,#field>#areas{max-width:clamp(300px,calc(100vh - 410px),720px)}
 .go{position:fixed;width:160px;margin:0;z-index:40}
@@ -922,7 +919,6 @@ main::before{filter:blur(1.5px);transform:scale(1.09)}
 #ntm{position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:190;display:none;padding:4px 16px;border-radius:999px;font-size:15px;letter-spacing:.1em;color:#fff;background:linear-gradient(160deg,#79d0a2,#389a60);box-shadow:0 3px 8px #0a3a2a55}
 #ntm.low{background:linear-gradient(160deg,#ff9d95,#e5484d);animation:ntl .8s ease-in-out infinite}@keyframes ntl{50%{transform:translateX(-50%) scale(1.12)}}
 #nwait{position:fixed;top:44px;left:50%;transform:translateX(-50%);z-index:190;display:none;padding:6px 18px;border-radius:999px;font-size:15px;letter-spacing:.06em;color:#1f4a35;background:linear-gradient(160deg,#fff,#d9f0e3);box-shadow:0 3px 10px #0a3a2a55,inset 0 0 0 2px #bfe8d0}
-body.net #rs,body.net .top label{display:none}
 
 /* ホームのカード：外したとき(戻り)は少し長く、ゆっくり→はやく→終わり際ほんの少しゆっくり */
 #home .hmc>.dkc.hc,#home .hmb .hbi{transition:transform .5s cubic-bezier(.55,.05,.85,1),box-shadow .5s cubic-bezier(.55,.05,.85,1),filter .4s ease-in-out}
@@ -1547,3 +1543,66 @@ body:has(#hmdt.on) #home>:not(#hmdt),body:has(#dkdt.on) #dkb>:not(#dkdt),body:ha
 #board::after{z-index:5}
 .cell.clash>.fxo{z-index:0}
 .cell.clash .cd{z-index:1}
+
+/* ===== v0.5 バトル画面：上部バー（ログ／ターン／降参）・プレイヤー表示・ログ画面・降参 ===== */
+#field{--bw:clamp(300px,calc(100vh - 400px),720px);--gw:clamp(100px,17vh,150px)}
+#tbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;height:45px;margin-bottom:var(--tbm,38px);position:relative;z-index:8}
+.tbb{display:inline-flex;align-items:center;gap:7px;border:0;border-radius:999px;padding:8px 22px 8px 16px;font:inherit;font-size:16px;font-weight:600;letter-spacing:.1em;color:#1f4a35;cursor:pointer;background:linear-gradient(160deg,#fffffff0,#d9f2e4ee 60%,#c4e9d3ee);box-shadow:0 4px 10px #0a3a2a40,inset 0 0 0 2px #ffffffb0;transition:transform .3s,box-shadow .3s,filter .3s}
+.tbb i{font-style:normal;transition:transform .3s}
+.tbb:hover:not(:disabled){transform:translateY(-3px);filter:brightness(1.06);box-shadow:0 8px 16px #0a3a2a55,inset 0 0 0 2px #fff;transition-duration:.2s}
+.tbb:hover:not(:disabled) i{transform:rotate(-12deg) scale(1.18);transition-duration:.2s}
+.tbb:active:not(:disabled){transform:scale(.94)}
+#lgb{justify-self:start}
+#ffb{justify-self:end;color:#4a5a86;background:linear-gradient(160deg,#fffffff0,#dde6f6ee 60%,#c6d3ee)}
+.tbb:disabled{cursor:default;opacity:.45;box-shadow:none}
+#turn{justify-self:center;padding:7px 30px;border-radius:999px;font-size:18px;font-weight:700;letter-spacing:.14em;color:#fff;background:linear-gradient(160deg,#79d0a2,#46b074 60%,#389a60);box-shadow:0 4px 12px #0a3a2a55,inset 0 1px 0 #fff6}
+/* 五角形は盤面のすぐ外側へ。その外側にプレイヤー情報 */
+#gl{left:auto;right:calc(50% + var(--bw)/2 + 18px)}
+#gr{right:auto;left:calc(50% + var(--bw)/2 + 18px)}
+.pl{position:absolute;top:120px;height:var(--gw);display:flex;align-items:center;gap:12px;z-index:5;pointer-events:none;max-width:calc(50% - var(--bw)/2 - var(--gw) - 40px)}
+#pl0{right:calc(50% + var(--bw)/2 + 18px + var(--gw) + 14px);flex-direction:row-reverse;text-align:right}
+#pl1{left:calc(50% + var(--bw)/2 + 18px + var(--gw) + 14px)}
+.pav{flex:none;width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:34px;background:linear-gradient(160deg,#fff,#d9f2e4);box-shadow:0 0 0 4px var(--rc),0 6px 14px #0006,inset 0 0 0 2px #fff}
+.pl.me{--rc:#52c184}.pl.cp{--rc:#c987bd}
+.pl.me .pav{box-shadow:0 0 0 4px #52c184,0 6px 14px #0006}
+.ptx{display:flex;flex-direction:column;line-height:1.3;min-width:0;padding:7px 16px;border-radius:22px 22px 22px 22px;background:linear-gradient(160deg,#ffffffec,#d9f2e4e6);box-shadow:0 4px 12px #0004,inset 0 0 0 2px #ffffffb0;color:#1f4a35}
+.pl.cp .ptx{background:linear-gradient(160deg,#ffffffec,#f1dff0e6);color:#5a2c52}
+.ptx b{font-size:17px;letter-spacing:.06em;overflow-wrap:anywhere}
+.ptx em{font-style:normal;font-size:15px;letter-spacing:.12em;color:#a8650c}
+.pl.cp .ptx em{color:#8a4a7d}
+@media (max-width:1100px){.ptx em{display:none}.pav{width:48px;height:48px;font-size:26px}}
+/* オンラインの残り時間・待機表示・選択メッセージは上部バーの下へ */
+#ntm{top:54px}#nwait{top:92px}#pp{top:56px}body.net #pp{top:92px}
+/* ログ画面 */
+#lgw,#ffw{position:fixed;inset:0;z-index:200;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,#0a2a1d66,#0a2a1db3);opacity:0;pointer-events:none;transition:opacity .45s}
+#lgw.on,#ffw.on{opacity:1;pointer-events:auto;transition-duration:.25s}
+#ffw{z-index:205}
+.lgp,.ffp{position:relative;color:#1f4a35;background:linear-gradient(160deg,#fffdf4f4,#e6f5ebf4 55%,#f7f0e0f4);box-shadow:0 20px 50px #0007,inset 0 0 0 2px #ffffffc0;transform:translateY(18px) scale(.97);transition:transform .45s cubic-bezier(.2,.9,.3,1.1)}
+#lgw.on .lgp,#ffw.on .ffp{transform:none;transition-duration:.3s}
+.lgp{width:min(660px,92vw);height:min(76vh,720px);border-radius:34px 26px 38px 28px/28px 36px 26px 38px;display:flex;flex-direction:column;overflow:hidden}
+.lgp::before{content:"";position:absolute;inset:auto -60px -80px auto;width:260px;height:260px;border-radius:50%;background:radial-gradient(closest-side,#f9c6dc66,#f9c6dc00);pointer-events:none}
+.lgh{display:flex;align-items:center;justify-content:space-between;padding:18px 26px 8px}
+.lgh h3{margin:0;font-size:22px;letter-spacing:.2em;font-weight:600}
+.lgx0{width:38px;height:38px;border:0;border-radius:50%;cursor:pointer;font-size:17px;color:#7a4a08;background:linear-gradient(160deg,#fff3c4,#ffd36e 55%,#f0a93a);box-shadow:0 2px 6px #a8650c44;transition:transform .3s,filter .3s}
+.lgx0:hover{transform:rotate(90deg) scale(1.1);filter:brightness(1.08);transition-duration:.2s}.lgx0:active{transform:rotate(90deg) scale(.9)}
+.lgb{flex:1;min-height:0;overflow-y:auto;padding:4px 22px 24px;position:relative}
+.lge{text-align:center;color:#6b8577;margin:40px 0}
+.lgg h4{position:sticky;top:0;z-index:2;margin:14px 0 6px;font-size:15px;font-weight:600;letter-spacing:.18em}
+.lgg h4 span{display:inline-block;padding:3px 18px;border-radius:999px;color:#fff;background:linear-gradient(160deg,#79d0a2,#46b074 60%,#389a60);box-shadow:0 2px 6px #0a3a2a33}
+.lgr{display:flex;align-items:baseline;gap:8px;padding:6px 12px;margin:2px 0;border-radius:16px;font-size:15px;line-height:1.55;background:linear-gradient(90deg,#ffffff00,#ffffff00);transition:background .3s,transform .3s}
+.lgr:hover{background:linear-gradient(90deg,#ffffffd0,#ffffff30);transform:translateX(3px);transition-duration:.2s}
+.lgr.me{box-shadow:inset 4px 0 0 #52c184}.lgr.cp{box-shadow:inset 4px 0 0 #c987bd}
+.lgi{font-style:normal;flex:none;width:1.6em;text-align:center}
+.lgt{flex:none;padding:0 10px;border-radius:999px;font-size:15px;font-weight:600;color:#fff;background:linear-gradient(160deg,#79d0a2,#389a60)}
+.lgt.cp{background:linear-gradient(160deg,#d9a0cf,#8a4a7d)}
+.lgx{min-width:0;overflow-wrap:anywhere}
+.lgr.k-area,.lgr.k-end{font-weight:600}
+.lgr.k-pt,.lgr.k-end{background:linear-gradient(90deg,#fff3c4aa,#fff3c400)}
+/* 降参の確認 */
+.ffp{padding:30px 44px 26px;border-radius:38px 28px 40px 30px/30px 38px 28px 40px;text-align:center}
+.ffp p{margin:0 0 20px;font-size:22px;font-weight:600;letter-spacing:.12em}
+.ffr{display:flex;gap:16px;justify-content:center}
+.ffr .obtn{min-width:110px}
+.lgr.me,.lgr.cp{color:#1f4a35}
+.lgp,.ffp{background:linear-gradient(160deg,#fffdf4fa,#e6f5ebfa 55%,#f7f0e0fa)}
+.ffr{align-items:center}

@@ -67,5 +67,4 @@ $("dkact").onclick=()=>{ACT=DKS[SELD].id;dkSave();dkRender()};
 $("dkdel").onclick=()=>{if(DKS.length<2)return;const d=DKS.splice(SELD,1)[0];if(d.id===ACT)ACT=DKS[0].id;SELD=0;dkSave();dkRender()};
 $("hbD").onclick=()=>{DKRET=0;$("home").classList.remove("on");$("dkb").classList.add("on");SELD=Math.max(0,DKS.findIndex(d=>d.id===ACT));TOAST="";dkRender()};
 $("dkbk").onclick=()=>{if(DKRET){DKRET=0;$("dkb").classList.remove("on");$("dkdt").classList.remove("on");bmatOpen()}else homeOpen()};
-$("hm").onclick=homeOpen;
 
