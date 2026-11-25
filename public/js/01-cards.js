@@ -99,7 +99,7 @@ const CARDS=[
 ["🪻","フジ","ノダフジ",3,4,["草"],[{w:"z",t:"隣接する相手カードはパワーアップできない"}],void 0,"t"],
 ["🌾","エノコログサ","",2,2,["草"],[{w:"t",t:"隣接マスに相手カードが配置されたとき、自分のデッキから草を1つ手札に加える",s:"草を手札へ",k:"up",on:(sb,si,nb,ni)=>nb.o!==sb.o&&adj(si).includes(ni),hvf:b=>S.deck[b.o].some(c=>!c.hid&&c.a.includes("草"))?1:0,run:sb=>{grassToHand(sb.o)}}],void 0,"t"],
 ["🌼","アサガオ","アーリーコール",2,1,["花","草"],[{w:"s",t:"奇数ターン+2",pw:()=>S.turn%2?2:0},{w:"p",t:"「トレリス」を手札に加える",s:"+トレリス",k:"up",run:b=>{addHand(b.o,"トレリス")}}],void 0,"t"],
-["☘️","カタバミ","",0,1,["草"],[{w:"x",t:"隣接するカードが撤去されたとき、そこに増殖する",s:"増殖",k:"up",on:()=>true,run:async(b,j,i)=>{const pl=(S.pl||{})[i];if(S.board[i]||(pl&&pl.includes(b.o)))return;await spawnAt(b,i)}}],void 0,"t"],
+["☘️","カタバミ","",0,1,["草"],[{w:"x",t:"隣接するカードが撤去されたとき、そこに増殖する",s:"増殖",k:"up",on:()=>true,can:(b,j,i)=>{const pl=(S.pl||{})[i];return!S.board[i]&&!(pl&&pl.includes(b.o))},run:async(b,j,i)=>{const pl=(S.pl||{})[i];if(S.board[i]||(pl&&pl.includes(b.o)))return;await spawnAt(b,i)}}],void 0,"t"],
 ["🌱","ミント","スペアミント",0,1,["草"],[{w:"d",t:"このカードが撤去されたとき、「ミント」を2つ手札に加える",s:"+ミント×2",k:"up",run:b=>{addHand(b.o,"ミント");addHand(b.o,"ミント")}}],void 0,"t"],
 ["💮","クレマチス","白万重",4,5,["花","草"],[{w:"p",t:"自分の他のカード2つを-1し、相手のカード1つ-4",s:"-1 / -4",k:"dn",ok:(b,i)=>SEL.mo(b,i).length>0,run:async(b,i)=>{const a=[];for(let n=0;n<2;n++){const L=SEL.mo(b,i).filter(j=>!a.includes(j));if(!L.length)break;a.push(await pick(b.o,{cells:L,msg:`-1する自分の他のカードを選んでください（${n+1}/2）`}))}
  for(const j of a)await bonusAt(j,-1);const O=SEL.op(b,i);if(O.length){const j=await pick(b.o,{cells:O,msg:"-4する相手のカードを選んでください"});await bonusAt(j,-4)}}}],void 0,"t"],

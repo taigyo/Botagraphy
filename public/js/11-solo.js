@@ -21,8 +21,10 @@ function stageCol(){const p=stageProg();
     return `<button class="bmd${i===BM.stage?" on":""}" data-s="stage" data-id="${i}"${op?"":" disabled"}><i class="bmi e">${op?s.icon:"🔒"}</i><span class="bmt"><b>${esc(s.name)}　${esc(s.sub)}</b><em>${op?"強さ："+cpuLvName(s.lv)+(cl?"　✓ クリア済み":""):"前のステージをクリアすると解放"}</em></span></button>`}).join("")}</div></section>`}
 function stageLv(){const s=STAGES[BM.stage];return `<section class="bmc bmlv"><h3>相手の強さ：<span id="stgl">${cpuLvName(s.lv)}</span></h3><div class="bmlb" id="stgb" style="--v:${s.lv}"><i></i></div></section>`}
 function stagePick(i){BM.stage=i;const s=STAGES[i];$("stgl").textContent=cpuLvName(s.lv);$("stgb").style.setProperty("--v",s.lv)}
-/* バトル設定のカード（クリア数）・結果パネル */
-function stageCard(){const n=STAGES.filter(s=>stageProg().cleared[s.id]).length,c=$("bsc3");if(c)c.querySelector("span").textContent=`クリア ${n}/${STAGES.length}`}
+/* ソロの入口は1つ。中のタブ（ステージ／フリー対戦）で切り替え、最後に開いた方を覚える */
+const soloTab=v=>{try{if(v)localStorage.setItem("bota_solotab",v);else return localStorage.getItem("bota_solotab")==="solo"?"solo":"stage"}catch(e){}return v||"stage"};
+const bmTabs=()=>BM.mode==="solo"||BM.mode==="stage"?`<div class="bmtabs">${[["stage",`ステージ　${STAGES.filter(s=>stageProg().cleared[s.id]).length}/${STAGES.length}`],["solo","フリー対戦"]].map(([k,n])=>`<button class="bmtab${BM.mode===k?" on":""}" data-s="tab" data-id="${k}">${n}</button>`).join("")}</div>`:"";
+/* 結果パネル */
 function stageUi(){$("sresb").textContent=BM.st?"ステージ選択へ":"対戦設定へ";$("sresn").style.display="none";$("sresm").textContent=""}
 function stageEnd(r){const st=BM.st,i=STAGES.indexOf(st);if(!st)return;let msg="引き分け…もう一度挑戦しよう";
   if(r==="あなたの勝ち"){const p=stageProg(),first=!p.cleared[st.id],nx=STAGES[i+1];p.cleared[st.id]=1;try{localStorage.setItem(STAGE_KEY,JSON.stringify(p))}catch(e){}
@@ -32,4 +34,4 @@ function stageEnd(r){const st=BM.st,i=STAGES.indexOf(st);if(!st)return;let msg="
 (()=>{const R=$("sres"),n=document.createElement("button"),m=document.createElement("div");
   n.className="obtn";n.id="sresn";n.textContent="次のステージへ";n.style.display="none";m.id="sresm";R.prepend(n);R.append(m);
   n.onclick=()=>{const k=STAGES.indexOf(BM.st)+1;if(!STAGES[k])return;R.classList.remove("on");BM.stage=k;BM.st=STAGES[k];init()};
-  $("bsc3").onclick=()=>{pop($("bsc3"));setTimeout(()=>bmatOpen("stage"),260)};stageCard()})();
+})();

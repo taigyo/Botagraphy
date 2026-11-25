@@ -1534,3 +1534,16 @@ body:has(#hmdt.on) #home>:not(#hmdt),body:has(#dkdt.on) #dkb>:not(#dkdt),body:ha
 #sres{flex-wrap:wrap;justify-content:center}
 #sresm{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:14px;white-space:nowrap;padding:8px 22px;border-radius:20px;font-size:16px;letter-spacing:.1em;color:#1f4a35;background:linear-gradient(135deg,#fffbe0,#e6f6ec);box-shadow:0 3px 10px #0a3a2a2a,inset 0 0 0 2px #cfeadb}
 #sresm:empty{display:none}
+
+/* ---- v0.4：対戦設定のズームでスクロールバーが出て見切れる→余白を確保して拡大も控えめに ---- */
+.bml{padding:10px 14px;overflow-x:hidden}
+@keyframes bpop2{40%{transform:scale(1.04)}}
+/* ソロ内のタブ（ステージ／フリー対戦） */
+.bmtabs{display:flex;gap:8px;justify-content:center;margin:2px 0 10px}
+.bmtab{border:0;border-radius:999px;padding:7px 22px;font:inherit;font-size:15px;letter-spacing:.1em;color:#1f4a35;cursor:pointer;background:linear-gradient(160deg,#fff,#e6f6ec);box-shadow:0 2px 6px #0a3a2a22,inset 0 0 0 2px #cfeadb;transition:box-shadow .3s,background .3s,transform .3s}
+.bmtab:hover{transform:translateY(-1px)}.bmtab.on{background:linear-gradient(160deg,#f2fff6,#bfeccf);box-shadow:0 3px 8px #2a9a5a44,inset 0 0 0 2px #52c184}
+/* 盤面の重なり順：絵 < カード演出(.fxo) < エリアの区切り線 < 威力バッジ・効果ラベル < エリア表示(#cn) */
+#board .cell>.fxo{z-index:4}
+#board::after{z-index:5}
+.cell.clash>.fxo{z-index:0}
+.cell.clash .cd{z-index:1}

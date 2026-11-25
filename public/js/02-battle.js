@@ -10,7 +10,7 @@ function init(){$("pp").classList.remove("on");$("sres").classList.remove("on");
 }
 async function next(){
   const s0=S;S.busy=true;S.turn++;banner(S.turn);const g=S.turn>=4?3:2;S.mana[0]+=g+S.nm[0];S.mana[1]+=g+S.nm[1];S.nm=[0,0];
-  if(S.turn>1){render();await sleep(1400);if(S!==s0)return;await sweep();if(S!==s0)return;S.ini^=1;dr(0);dr(1)}
+  if(S.turn>1){render();await sleep(1400);if(S!==s0)return;await sweep();if(S!==s0)return;S.eff=0;if(!PIN)info.classList.remove("on");finfo.classList.remove("on");S.ini^=1;dr(0);dr(1)}
   S.st=[];S.sel=null;S.busy=false;if(NET.on)NET.t0=Date.now();render();
 }
 const left=()=>S.mana[0]-S.st.reduce((a,s)=>a+s.card.c,0);
@@ -100,7 +100,7 @@ const rm=async(ix,gs)=>{ix=ix.filter(i=>S.board[i]);if(!ix.length)return[];
  const g=gs||guardSet(),tr=[],dd=[];
  ix.forEach(i=>adj(i).forEach(j=>{const x=S.board[j];if(x&&!ix.includes(j))for(const f of x.card.f)if(f.w==="x"&&f.on(j,i))tr.push([x,j,f,i])}));
  ix.forEach(i=>{const b=S.board[i];S.board[i]=null;if(g[b.o]&&b.card.a.includes("木")){const c={...b.card,c:Math.max(0,b.card.c-1)};if(S.hand[b.o].length<7){c.nw=Date.now();S.hand[b.o].push(c)}else if(b.o===0)setTimeout(()=>vanish2(c),600)}else{(S.yard||(S.yard=[[],[]]))[b.o].push(b.card);for(const f of b.card.f)if(f.w==="d")dd.push([b,i,f])}});
- render();for(const[x,j,f,i]of tr)if(S.board[j]===x)await fire(x,j,f.run?{s:f.s,k:f.k||"up",run:(b,jj)=>f.run(b,jj,i)}:{s:"+1マナ",k:"up",run:()=>{gm(x.o,1)}});
+ render();for(const[x,j,f,i]of tr)if(S.board[j]===x&&(!f.can||f.can(x,j,i)))await fire(x,j,f.run?{s:f.s,k:f.k||"up",run:(b,jj)=>f.run(b,jj,i)}:{s:"+1マナ",k:"up",run:()=>{gm(x.o,1)}});
  for(const[b,i,f]of dd)await fire(b,i,{s:f.s,k:f.k||"up",run:()=>f.run(b)});return ix};
 const isAct=c=>!!c&&c.a.includes("アクション");
 const pick=(o,{cells,hand,msg,cancel})=>new Promise(res=>{const L=cells||hand,sync=NET.on&&S.busy;if(o===1||S.bot0){if(sync)return netWait("choice").then(res);return res(cpuPick(o,L,{cells,hand,msg}))}S.pk={cells,hand,res:sync?v=>{netSend({k:"ch",v});res(v)}:res,cancel};$("pp").textContent=msg;$("pp").classList.add("on");render()});

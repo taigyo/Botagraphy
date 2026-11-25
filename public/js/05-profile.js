@@ -23,8 +23,8 @@ const deckLabel=()=>{const d=DKS.find(x=>x.id===(ON.dk||ACT));return d&&dkFull(d
 const ON={ws:null,room:null,via:"",st:null,go:null,timer:0,log:[],dk:""};
 let bsFl=false;
 const pop=el=>{el.classList.remove("pop");void el.offsetWidth;el.classList.add("pop")};
-function bsFlip(v,instant){bsFl=v;const a=$("bsc1"),b=$("bsc2");$("bsc3").style.display=v?"none":"";a.classList.toggle("fl",v);if(instant)b.classList.toggle("fl",v);else setTimeout(()=>b.classList.toggle("fl",v),160)}
-function bsetOpen(){$("home").classList.remove("on");$("bset").classList.add("on");bsFlip(false,true);stageCard()}
+function bsFlip(v,instant){bsFl=v;const a=$("bsc1"),b=$("bsc2");a.classList.toggle("fl",v);if(instant)b.classList.toggle("fl",v);else setTimeout(()=>b.classList.toggle("fl",v),160)}
+function bsetOpen(){$("home").classList.remove("on");$("bset").classList.add("on");bsFlip(false,true)}
 function bsetClose(){$("bset").classList.remove("on");homeOpen()}
 
 /* ---- 設定画面：アイコン（絵文字／カードのイラスト）・名前・称号 ---- */
@@ -47,12 +47,12 @@ $("hpset").onclick=psOpen;profShow();coinShow();
 function soloStart(){NET.on=false;document.body.classList.remove("net");$("bset").classList.remove("on");$("bmat").classList.remove("on");$("home").classList.remove("on");started=true;init()}
 $("hbB").onclick=bsetOpen;
 $("bsbk").onclick=()=>{if(bsFl)bsFlip(false);else bsetClose()};
-$("bsc1").onclick=()=>{pop($("bsc1"));if(!bsFl)setTimeout(()=>bmatOpen("solo"),260);else bmatOpen("random")};
+$("bsc1").onclick=()=>{pop($("bsc1"));if(!bsFl)setTimeout(()=>bmatOpen(soloTab()),260);else bmatOpen("random")};
 $("bsc2").onclick=()=>{pop($("bsc2"));if(!bsFl)bsFlip(true);else bmatOpen("room")};
 
 /* ---- 対戦設定：デッキ選択（ソロ・ランダム・ルーム共通）。自分のデッキ／ソロはCPUのデッキも選べる ---- */
 const BMT=document.createElement("div");BMT.id="bmat";document.body.append(BMT);
-const BMI={solo:["ソロ","CPUと対戦","バトル開始"],random:["ランダムマッチ","世界のだれかと対戦","マッチング開始"],room:["ルーム","合言葉で友だちと対戦","ルームへ進む"],stage:["ソロステージ","CPUのステージに挑戦","ステージ開始"]};
+const BMI={solo:["ソロ","フリー対戦：デッキと強さを自由に選ぶ","バトル開始"],random:["ランダムマッチ","世界のだれかと対戦","マッチング開始"],room:["ルーム","合言葉で友だちと対戦","ルームへ進む"],stage:["ソロ","ステージ：勝ち進んで次を解放","ステージ開始"]};
 const bmFull=d=>dkFull(d);
 function bmatOpen(mode){if(mode)BM.mode=mode;if(BM.mode==="stage")stageInit();$("home").classList.remove("on");$("bset").classList.remove("on");$("dkb").classList.remove("on");
   if(!DKS.some(d=>d.id===BM.my&&bmFull(d)))BM.my=(DKS.find(d=>d.id===ACT&&bmFull(d))||DKS.find(bmFull)||{}).id||null;
@@ -63,7 +63,7 @@ function bmatRender(){const m=BMI[BM.mode],solo=BM.mode==="solo";
   const tile=(d,s,on)=>`<button class="bmd${on?" on":""}" data-s="${s}" data-id="${esc(d.id)}"${bmFull(d)?"":" disabled"}>${ico(d)}<span class="bmt"><b>${esc(d.name)}</b><em>${bmFull(d)?"メイン："+esc(d.main):"未完成（"+dkCnt(d)+"/25）"}</em></span></button>`;
   const pre=`<button class="bmd${BM.cpu==="preset"?" on":""}" data-s="cpu" data-id="preset"><i class="bmi e">🌸</i><span class="bmt"><b>花デッキ（初期構成）</b><em>CPUの標準デッキ</em></span></button>`;
   BMT.innerHTML=`<div class="waves"><i></i><i></i><i></i><i></i><i></i></div><header><button id="bmbk" class="bsb">← 戻る</button><h2>対戦設定</h2><span></span></header>
-  <div class="bmb"><div class="bmmode"><b>${m[0]}</b><span>${m[1]}</span></div>
+  <div class="bmb"><div class="bmmode"><b>${m[0]}</b><span>${m[1]}</span></div>${bmTabs()}
   <div class="bmcols"><section class="bmc"><h3>あなたのデッキ</h3><div class="bml">${DKS.map(d=>tile(d,"my",d.id===BM.my)).join("")}</div><button class="obtn sub bmed" data-a="edit">✎ このデッキを編集</button></section>
   ${solo?`<section class="bmc"><h3>CPUのデッキ</h3><div class="bml">${pre}${DKS.map(d=>tile(d,"cpu",d.id===BM.cpu)).join("")}</div></section>`:BM.mode==="stage"?stageCol():""}</div>
   ${solo?`<section class="bmc bmlv"><h3>CPUの強さ</h3><div class="bmlvs">${[["弱い",CPULV.weak],["普通",CPULV.mid],["強い",CPULV.strong]].map(([n,v])=>`<button class="bmd${cpuLvName(BM.lv)===n?" on":""}" data-s="lv" data-id="${v}"><span class="bmt"><b>${n}</b></span></button>`).join("")}</div><div class="bmlb" style="--v:${BM.lv}"><i></i></div></section>`:BM.mode==="stage"?stageLv():""}
@@ -75,6 +75,7 @@ function bmatGo(){if(BM.my){ACT=BM.my;dkSave()}
 function bmatEdit(){const k=DKS.findIndex(d=>d.id===BM.my);SELD=k>=0?k:0;DKRET=1;BMT.classList.remove("on");$("dkb").classList.add("on");TOAST="";dkRender()}
 BMT.onclick=e=>{const b=e.target.closest("button");if(!b||b.disabled)return;pop(b);
   if(b.id==="bmbk")setTimeout(bmatBack,120);
+  else if(b.dataset.s==="tab"){soloTab(b.dataset.id);bmatOpen(b.dataset.id)}
   else if(b.dataset.s){if(b.dataset.s==="my"){BM.my=b.dataset.id;ACT=BM.my;dkSave()}else if(b.dataset.s==="stage")stagePick(+b.dataset.id);else if(b.dataset.s==="lv"){BM.lv=+b.dataset.id;try{localStorage.setItem("cpuLv",BM.lv)}catch(e){}BMT.querySelector(".bmlb").style.setProperty("--v",BM.lv)}else BM.cpu=b.dataset.id;BMT.querySelectorAll(`[data-s="${b.dataset.s}"]`).forEach(x=>x.classList.toggle("on",x===b))}
   else if(b.dataset.a==="edit")setTimeout(bmatEdit,150);else if(b.dataset.a==="go")setTimeout(bmatGo,150)};
 $("sresr").onclick=()=>{$("sres").classList.remove("on");init()};

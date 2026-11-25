@@ -5,8 +5,8 @@
 const CPULV={weak:.12,mid:.5,strong:.92};
 const cpuClamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
 const cpuLvName=v=>v<.3?"弱い":v<.7?"普通":"強い";
-/* syn＝手札・盤面とのシナジー／塞ぎの読み（0で無効）、ord＝同ターンはマス番号の小さい順に解決される事を読む。弱いほど両方オフ */
-const cpuP=(lv,opt)=>Object.assign({lv,miss:.3*Math.pow(1-lv,1.6),K:1+Math.round(lv*lv*24),T:.4+(1-lv)*5,fx:cpuClamp(lv*1.3),opp:lv>.3,cm:6+Math.round(lv*lv*24),look:lv,syn:cpuClamp((lv-.25)/.6),ord:lv>.4},opt||{});
+/* syn＝手札・盤面とのシナジー／塞ぎの読み（0で無効）、ord＝同ターンはマス番号の小さい順に解決される事を読む、use＝カードの最低限の使い方を守る。弱いほどオフ */
+const cpuP=(lv,opt)=>Object.assign({lv,miss:.3*Math.pow(1-lv,1.6),K:1+Math.round(lv*lv*24),T:.4+(1-lv)*5,fx:cpuClamp(lv*1.3),opp:lv>.3,cm:6+Math.round(lv*lv*24),look:lv,syn:cpuClamp((lv-.25)/.6),ord:lv>.4,use:lv>.35},opt||{});
 function cpu(){return aiPlan(1,S.lv?S.lv[1]:.5,S.opt&&S.opt[1])}
 
 /* 効果の価値（スコア単位）。数値つきの効果は盤面に仮適用して面の差に反映するので、ここは「盤面に出ない価値」だけ */
@@ -56,9 +56,26 @@ function aiTrig(c,b,i){let r=0;
     if(c.P.ord)for(let j=i+1;j<36;j++){const nb=S.board[j];if(!nb||!nb.vt)continue;
       for(const f of b.card.f)if(f.w==="t"&&f.on(b,i,nb,j))r+=aiT1(c,f,b,nb,j)}}catch(e){}
   return r}
+/* 最低限の使い方（use＝普通以上）：効果が空振りする置き方は候補から外す（ノイズで選ばれないよう確定ルール）、効果が活きる置き方は加点。弱いは素朴なまま。
+   ・「端にいる間」の効果（ツゲ）→ 端のマスに置く　・条件つき／対象が要る配置効果（ok・tg・hvf：チューリップ・ケヤキ・カスミソウ・牡丹・たんぽぽ・スギ等）→ 条件・対象がないなら出さない
+   ・増殖系（シロツメクサ・ナツヅタ・クズ）→ 隣に空きマスがあるところ　・名前ごとの個別ルールは AI_USE（アクションは対象がなければ候補にしない＝aiPlan側） */
+const AI_BAD=5;
+const AI_USE={
+  "ハナミズキ":(c,b)=>c.H.some(h=>h!==b.card&&!c.used.has(h)&&!h.hid&&h.a.includes("木")&&h.c>0)?0:-AI_BAD,   // -1コストにする木が手札にない（hvfは自分自身を数えるのでここで判定）
+  "クレマチス":(c,b,i)=>SEL.op(b,i).length?0:-AI_BAD*.5,   // -4する相手カードがない
+  "ネモフィラ":()=>S.turn>5?-AI_BAD*.6:0,                   // +5は4〜5ターン目だけ
+};
+function aiUse(c,b,i){const card=b.card;let r=0,dead=0;const ov=AI_USE[card.n];if(ov){const v=ov(c,b,i);r+=v;if(v<0)dead-=v}
+  const np=card.f.filter(f=>!f.off&&f.w==="p").length||1,bad=x=>{r-=x;dead+=x};
+  for(const f of card.f){if(f.off)continue;
+    if(/端にいる間/.test(f.t||""))edge(i)?r+=AI_BAD*.4:bad(AI_BAD);
+    if(f.w==="p"){
+      if(card.n!=="ハナミズキ"){let d=false;try{d=f.hvf?!f.hvf(b,i):f.ok?!f.ok(b,i):f.tg?!f.tg(b,i).length:false}catch(e){}if(d)bad(AI_BAD/np)}
+      if(/増殖/.test(f.s||"")&&!emAdj(b,i).length)bad(AI_BAD*.7/np)}}
+  c.dead=dead;return r}
 /* 場に出す（仮）。b.vt＝今ターンに仮置きしたもの */
-function aiPlace(c,X,card,i){const b={o:c.o,card,bonus:0,vt:1};c.vs(i,b);let r=aiTrig(c,b,i);
-  for(const f of card.f)if(!f.off)r+=aiEff(c,X,b,i,f);return r}
+function aiPlace(c,X,card,i){c.dead=0;const b={o:c.o,card,bonus:0,vt:1};c.vs(i,b);let r=aiTrig(c,b,i);
+  for(const f of card.f)if(!f.off)r+=aiEff(c,X,b,i,f);if(c.P.use)r+=aiUse(c,b,i);return r}
 
 /* シナジー・塞ぎ：手札の「周りに左右されるカード」(aiDep) が、今後いちばん良いマスで出せたときの上積み。
    aiPot＝そのマスに仮置きしたときの 効果＋パワー増減（自身のパワーは除く）。
@@ -99,17 +116,18 @@ function aiPlan(o,lv,opt){
     const s0=sums(),df0=a=>o?s0[a][1]-s0[a][0]:s0[a][0]-s0[a][1];
     const oa=P.opp?Math.min(S.mana[1-o],10)*.7:0,wt=[0,1,2,3].map(a=>1/(1+Math.abs(df0(a))/4)),ws=wt.reduce((x,y)=>x+y);
     const X={mu:wt.map(v=>oa*v/ws),sg:2.5+.3*oa,wW:1+.6*S.pts[o]/S.win,wL:1+.9*S.pts[1-o]/S.win,sh:P.look*Math.min(1,(S.max-S.turn+1)/5)*1.2};
-    const c={o,P,vs,vb,tl:Math.max(1,S.max-S.turn),d:a=>{const s=sums();return(o?s[a][1]-s[a][0]:s[a][0]-s[a][1])-X.mu[a]},U,undo,dsum:()=>{const s=sums();let d=0;for(let a=0;a<4;a++)d+=o?s[a][1]-s[a][0]:s[a][0]-s[a][1];return d}};
+    const c={o,P,H,used:new Set(),vs,vb,tl:Math.max(1,S.max-S.turn),d:a=>{const s=sums();return(o?s[a][1]-s[a][0]:s[a][0]-s[a][1])-X.mu[a]},U,undo,dsum:()=>{const s=sums();let d=0;for(let a=0;a<4;a++)d+=o?s[a][1]-s[a][0]:s[a][0]-s[a][1];return d}};
     let best=null;
     for(let run=0;run<P.K;run++){
       if(run>0&&performance.now()-t0>450)break;
-      const m0=U.length,skip=new Set(H.filter(()=>Math.random()<P.miss)),used=new Set(),items=[];let rem=S.mana[o],res=0;
+      const m0=U.length,skip=new Set(H.filter(()=>Math.random()<P.miss)),used=new Set(),items=[];let rem=S.mana[o],res=0;c.used=used;
       for(let step=0;step<8;step++){if(run>0&&performance.now()-t0>450)break;
         const mv=[{sc:aiScore(o,X)+res,pass:1}],empty=S.board.map((b,i)=>b?-1:i).filter(i=>i>=0);
         for(const card of H){if(used.has(card)||skip.has(card)||card.c>rem||card.hid)continue;
           const act=isAct(card);let T;
           if(act){const f=card.f.find(x=>x.w==="a");T=actT(o,card);if(!T.length)continue;T=f.rnd?[T[0]]:aiSample(T,P.cm)}else T=aiSample(empty,P.cm);
-          for(const t of T){const m1=U.length;const r=(act?aiAct(c,card,t):aiPlace(c,X,card,t))-AI_V.cost*card.c;mv.push({sc:aiScore(o,X)+res+r,r,card,cell:act?-1:t,tg:act&&t>=0?t:undefined});undo(m1)}}
+          for(const t of T){const m1=U.length;const r=(act?aiAct(c,card,t):aiPlace(c,X,card,t))-AI_V.cost*card.c;mv.push({sc:aiScore(o,X)+res+r,r,card,cell:act?-1:t,tg:act&&t>=0?t:undefined,dead:!act&&P.use&&c.dead>.5});undo(m1)}}
+        for(let q=mv.length-1;q>0;q--)if(mv[q].dead)mv.splice(q,1);   // 普通以上：空振りする置き方は選択肢から外す
         if(P.syn>0&&mv.length>2){   // 有望な手だけ、手札とのシナジー・自分の今後の手を塞ぐか を足し引き
           const dep=H.filter(h=>!used.has(h)&&aiDep(h));
           if(dep.length){const pc=aiPotCells(o),cache=new Map();dep.forEach(h=>cache.set(h,pc.map(e=>aiPot(c,X,h,e))));
@@ -123,6 +141,7 @@ function aiPlan(o,lv,opt){
       if(!best||tot>best.t)best={t:tot,items:items.slice()};
       undo(m0)}
     plan=best?best.items:[];
+    if(P.use)plan=plan.filter(p=>p.cell>=0||actT(o,p.card).includes(p.tg));   // アクションは対象があるときだけ
   }finally{undo(0)}
   plan.forEach(p=>S.hand[o].splice(S.hand[o].indexOf(p.card),1));
   return plan.map(({card,cell,tg})=>tg===undefined?{card,cell}:{card,cell,tg});
