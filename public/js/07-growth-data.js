@@ -55,9 +55,9 @@ const FX_W={petals:2,leaves:1.5,kira_star:.8,kira_cross:.8,kira_dot:.8,kira_diam
 const fxPick=a=>{const w=a.map(id=>FX_W[id]==null?1:FX_W[id]);let r=Math.random()*w.reduce((x,y)=>x+y,0);for(let i=0;i<a.length;i++){r-=w[i];if(r<0)return a[i]}return a[a.length-1]};
 const fxEquip=(g,id)=>{const cat=FXG[id].cat,cap=FX_CAT[cat][1],same=g.eq.filter(x=>FXG[x]&&FXG[x].cat===cat);while(same.length>=cap){const o=same.shift();g.eq=g.eq.filter(x=>x!==o)}g.eq.push(id)};
 const fxNorm=ids=>[...new Set((ids||[]).map(fxMap))].filter(id=>FXG[id]);
-let GR=(()=>{try{const j=JSON.parse(localStorage.getItem(GK)||"null");if(j&&typeof j==="object"){const cards={};for(const[n,v]of Object.entries(j.cards||{})){const own=fxNorm(v.own),g={lv:v.lv|0,own,eq:[]};fxNorm(v.eq).filter(id=>own.includes(id)).forEach(id=>fxEquip(g,id));cards[n]=g}return{items:j.items|0,cards}}}catch{}return{items:0,cards:{}}})();
+let GR=(()=>{try{const j=JSON.parse(localStorage.getItem(GK)||"null");if(j&&typeof j==="object"){const cards={};for(const[n,v]of Object.entries(j.cards||{})){const own=fxNorm(v.own),fo=[...new Set(Array.isArray(v.fo)?v.fo:[])].filter(id=>FRD[id]),g={lv:v.lv|0,own,eq:[],fo,fr:FRD[v.fr]&&fo.includes(v.fr)?v.fr:null};fxNorm(v.eq).filter(id=>own.includes(id)).forEach(id=>fxEquip(g,id));cards[n]=g}return{items:j.items|0,cards}}}catch{}return{items:0,cards:{}}})();
 const gsave=()=>{try{localStorage.setItem(GK,JSON.stringify(GR))}catch{}};
-const gst=n=>GR.cards[n]||(GR.cards[n]={lv:0,own:[],eq:[]});
+const gst=n=>GR.cards[n]||(GR.cards[n]={lv:0,own:[],eq:[],fo:[],fr:null});
 /* 読み込み時：Lvに見合う固有（floor(Lv/10)個、定義数が上限）が足りなければ付与 */
 (()=>{let ch=0;for(const[n,g]of Object.entries(GR.cards)){const all=fxUni(n),want=Math.min(Math.floor((g.lv|0)/10),all.length);let have=g.own.filter(id=>FX_UQ.has(id)).length;
   while(have<want){const u=all.filter(id=>!g.own.includes(id));if(!u.length)break;g.own.push(fxPick(u));have++;ch=1}}if(ch)gsave()})();
@@ -71,23 +71,34 @@ const SHOP_K="bota_shop_v1";
 const dayKey=()=>{const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")};
 const hash32=t=>{let h=2166136261;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=Math.imul(h,16777619)}return h>>>0};
 const rng32=a=>()=>{a=(a+0x6D2B79F5)|0;let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;return((t^(t>>>14))>>>0)/4294967296};
-function shopLineup(key){const r=rng32(hash32("botagraphy-shop:"+key)),ids=Object.keys(FXG).filter(k=>!FX_UQ.has(k)),pk=[];for(let i=0;i<3;i++)pk.push(ids.splice(Math.floor(r()*ids.length),1)[0]);return pk.map(id=>({id,price:15+Math.floor(r()*16)}))}
-let SHOP=(()=>{try{const j=JSON.parse(localStorage.getItem(SHOP_K)||"{}")||{};return{d:typeof j.d==="string"?j.d:"",sold:Array.isArray(j.sold)?j.sold:[]}}catch{return{d:"",sold:[]}}})();
+/* 毎日10種：エフェクト・カード枠・裏面を、each 最低2つずつ入れて残りはランダム。ローカル日付で決まる（価格も固定） */
+function shopLineup(key){const r=rng32(hash32("botagraphy-shop2:"+key)),pool={fx:Object.keys(FXG).filter(k=>!FX_UQ.has(k)),fr:Object.keys(FRD),bk:Object.keys(BKD).filter(k=>k!=="std")},pick=[],T=["fx","fr","bk"];
+ for(const x of T)for(let i=0;i<2;i++)pick.push([x,pool[x].splice(Math.floor(r()*pool[x].length),1)[0]]);
+ while(pick.length<10){const all=T.flatMap(x=>pool[x].map(id=>[x,id])),[x,id]=all[Math.floor(r()*all.length)];pool[x].splice(pool[x].indexOf(id),1);pick.push([x,id])}
+ for(let i=pick.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[pick[i],pick[j]]=[pick[j],pick[i]]}
+ return pick.map(([x,id])=>{const[lo,hi]=x==="fx"?[15,30]:x==="fr"?FRD[id].p:BKD[id].p;return{t:x,id,k:x+":"+id,price:lo+Math.floor(r()*(hi-lo+1))}})}
+let SHOP=(()=>{try{const j=JSON.parse(localStorage.getItem(SHOP_K)||"{}")||{};return{d:typeof j.d==="string"?j.d:"",sold:Array.isArray(j.sold)?j.sold.map(x=>String(x).includes(":")?x:"fx:"+x):[]}}catch{return{d:"",sold:[]}}})();
 const shopSave=()=>{try{localStorage.setItem(SHOP_K,JSON.stringify(SHOP))}catch{}};
 const shopSync=()=>{const k=dayKey();if(SHOP.d!==k){SHOP={d:k,sold:[]};shopSave()}return k};
 const SH=document.createElement("div");SH.id="shop";document.body.append(SH);let SHT=0,SHN=null;
+const SHT_N={fx:"エフェクト",fr:"カード枠",bk:"カード裏面"};
+function shopPv(it){if(it.t==="fx")return`<div class="sp-pv">${fxHTML([it.id],"")}</div>`;
+ if(it.t==="fr")return`<div class="sp-pv cardpv"><div class="pvf"><i>🌱</i>${frHTML(it.id)}</div></div>`;
+ return`<div class="sp-pv cardpv">${bkHTML(it.id,"pvb")}</div>`}
 function shopRender(){const key=shopSync(),L=shopLineup(key);
  SH.innerHTML=`<div class="waves"><i></i><i></i><i></i><i></i><i></i></div><header><button class="bsb" data-s="back">← 戻る</button><h2>ショップ</h2><div class="shcb cbadge"><i class="coin">B</i><b class="cb-n">${COIN}</b><span>ボタコイン</span></div></header>
- <div class="shb"><p class="shn">本日のエフェクト<small>　毎日0時に入れ替わります</small></p><div class="shi">${L.map(it=>{const d=FXG[it.id],sold=SHOP.sold.includes(it.id),ok=COIN>=it.price,own=INV[it.id]||0;
-  return`<div class="spc${sold?" sold":""}${it.id===SHN?" got":""}"><div class="sp-pv">${fxHTML([it.id],"")}</div><b class="nm">${esc(d.name)}</b><span class="ct">${esc(FX_CAT[d.cat][0])}</span><p>${esc(d.desc)}</p>${own?`<em class="own">所持 ${own}</em>`:""}<button class="shbuy" data-s="buy" data-id="${it.id}"${sold||!ok?" disabled":""}>${sold?"売り切れ":`<i class="coin s">B</i>${it.price}`}</button>${!sold&&!ok?'<small class="shno">ボタコインが足りません</small>':""}</div>`}).join("")}</div>
- <p class="shs">買ったエフェクトは、成長画面の「アイテム」から好きなカードに使えます（使うと、そのカード専用になります）。</p></div>`;SHN=null}
+ <div class="shb"><p class="shn">本日の品ぞろえ<small>　毎日0時に入れ替わります</small></p><div class="shi">${L.map(it=>{const d=it.t==="fx"?FXG[it.id]:it.t==="fr"?FRD[it.id]:BKD[it.id],ownB=it.t==="bk"&&BKO.includes(it.id),sold=SHOP.sold.includes(it.k)||ownB,ok=COIN>=it.price,own=it.t==="fx"?INV[it.id]||0:it.t==="fr"?FRI[it.id]||0:0,ct=it.t==="fx"?FX_CAT[d.cat][0]:SHT_N[it.t];
+  return`<div class="spc t-${it.t}${sold?" sold":""}${it.k===SHN?" got":""}">${shopPv(it)}<b class="nm">${esc(d.name)}</b><span class="ct">${esc(ct)}</span><p>${esc(d.desc)}</p>${own?`<em class="own">所持 ${own}</em>`:""}<button class="shbuy" data-s="buy" data-k="${it.k}"${sold||!ok?" disabled":""}>${sold?(ownB?"所持済み":"売り切れ"):`<i class="coin s">B</i>${it.price}`}</button>${!sold&&!ok?'<small class="shno">ボタコインが足りません</small>':""}</div>`}).join("")}</div>
+ <p class="shs">エフェクトとカード枠は、成長画面の「アイテム」から好きなカードに使えます（使うと、そのカード専用になります）。カード裏面は一度買えばずっと使え、デッキ構築画面でデッキごとに選べます。</p></div>`;SHN=null}
 function shopTimer(){clearTimeout(SHT);const n=new Date(),m=new Date(n.getFullYear(),n.getMonth(),n.getDate()+1,0,0,0,200);SHT=setTimeout(()=>{if(SH.classList.contains("on")){shopRender();shopTimer()}},Math.max(1000,m-n))}
 function shopOpen(){shopRender();SH.classList.add("on");shopTimer();/* ショップが不透明になるまでホームを残す（背面のバトル画面が一瞬見えるのを防ぐ） */setTimeout(()=>{if(SH.classList.contains("on"))$("home").classList.remove("on")},300)}
 document.addEventListener("visibilitychange",()=>{if(!document.hidden&&SH.classList.contains("on")){shopRender();shopTimer()}});
 SH.onclick=e=>{const b=e.target.closest("button");if(!b||b.disabled)return;
  if(b.dataset.s==="back"){SH.classList.remove("on");clearTimeout(SHT);homeOpen()}
- else if(b.dataset.s==="buy"){const id=b.dataset.id,it=shopLineup(shopSync()).find(x=>x.id===id);if(!it||SHOP.sold.includes(id)||COIN<it.price)return;
-  COIN-=it.price;coinSave();INV[id]=(INV[id]||0)+1;invSave();SHOP.sold.push(id);shopSave();SHN=id;shopRender();toast(`「${esc(FXG[id].name)}」を手に入れた`)}};
+ else if(b.dataset.s==="buy"){const k=b.dataset.k,it=shopLineup(shopSync()).find(x=>x.k===k);if(!it||SHOP.sold.includes(k)||COIN<it.price||(it.t==="bk"&&BKO.includes(it.id)))return;
+  COIN-=it.price;coinSave();
+  if(it.t==="fx"){INV[it.id]=(INV[it.id]||0)+1;invSave()}else if(it.t==="fr"){FRI[it.id]=(FRI[it.id]||0)+1;friSave()}else{BKO.push(it.id);bkoSave()}
+  SHOP.sold.push(k);shopSave();SHN=k;shopRender();toast(`「${esc((it.t==="fx"?FXG:it.t==="fr"?FRD:BKD)[it.id].name)}」を手に入れた`)}};
 $("hbS").onclick=shopOpen;
 
 const fxR=(i,k)=>{const x=Math.sin(i*127.1+k*311.7)*43758.5453;return x-Math.floor(x)},fxX=(s,k)=>(6+fxR(s,k+500)*88).toFixed(1),

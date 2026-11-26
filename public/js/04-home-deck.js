@@ -1,10 +1,10 @@
 /* ===== ホーム・デッキ構築 ===== */
 const DK_KEY="botagraphy.decks2",isMn=c=>c.a.includes("メイン");
 const POOL=CARDS.filter(c=>(c.d==="f"||c.d==="t")&&!c.tok),TOKS=CARDS.filter(c=>c.tok),MAINS=POOL.filter(isMn),NORM=POOL.filter(c=>!isMn(c)),byN=n=>POOL.find(c=>c.n===n)||TOKS.find(c=>c.n===n);
-const dkNew=(name,s,emp)=>({id:"d"+Date.now().toString(36)+rnd(1e4),name,main:s?s.main:emp?null:(MAINS[0]?MAINS[0].n:null),k:s?[...s.k]:emp?[]:NORM.filter(c=>c.d==="f").map(c=>c.n)});
+const dkNew=(name,s,emp)=>({id:"d"+Date.now().toString(36)+rnd(1e4),name,main:s?s.main:emp?null:(MAINS[0]?MAINS[0].n:null),k:s?[...s.k]:emp?[]:NORM.filter(c=>c.d==="f").map(c=>c.n),bk:s&&BKO.includes(s.bk)?s.bk:"std"});
 const BM={mode:"solo",my:null,cpu:"preset",lv:(()=>{try{const v=parseFloat(localStorage.getItem("cpuLv"));return v>=0&&v<=1?v:.5}catch(e){return .5}})()};let DKRET=0;
 let DKS=[dkNew("花デッキ")],ACT=DKS[0].id,SELD=0,started=false,DKL=0,LP=null,TOAST="";
-try{const j=JSON.parse(localStorage.getItem(DK_KEY)||"null");if(j&&Array.isArray(j.decks)&&j.decks.length){DKS=j.decks.map(d=>({id:String(d.id),name:String(d.name||"デッキ"),main:byN(d.main)&&isMn(byN(d.main))&&!byN(d.main).tok?d.main:null,k:[...new Set((d.k||[]).filter(n=>byN(n)&&!isMn(byN(n))&&!byN(n).tok))].slice(0,12)}));ACT=DKS.some(d=>d.id===j.act)?j.act:DKS[0].id}}catch(e){}
+try{const j=JSON.parse(localStorage.getItem(DK_KEY)||"null");if(j&&Array.isArray(j.decks)&&j.decks.length){DKS=j.decks.map(d=>({id:String(d.id),name:String(d.name||"デッキ"),main:byN(d.main)&&isMn(byN(d.main))&&!byN(d.main).tok?d.main:null,k:[...new Set((d.k||[]).filter(n=>byN(n)&&!isMn(byN(n))&&!byN(n).tok))].slice(0,12),bk:BKO.includes(d.bk)?d.bk:"std"}));ACT=DKS.some(d=>d.id===j.act)?j.act:DKS[0].id}}catch(e){}
 const dkSave=()=>{try{localStorage.setItem(DK_KEY,JSON.stringify({decks:DKS,act:ACT}))}catch(e){}};
 const dkFull=d=>!!d.main&&d.k.length===12,dkCnt=d=>(d.main?1:0)+d.k.length*2;
 function myDeck(id){let d=DKS.find(x=>x.id===(id||ACT));if(!d||!dkFull(d))d=dkNew("");
@@ -35,7 +35,9 @@ function dkRender(){
   const full=dkFull(D);const ak=$("dkact");ak.textContent=D.id===ACT?"★":"☆";ak.classList.toggle("is",D.id===ACT);ak.title=D.id===ACT?"使用中のデッキ":full?"対戦で使う":"25枚そろうと使えます";ak.disabled=!full||D.id===ACT;$("dkdel").disabled=DKS.length<2;
   const n=dkCnt(D),c=$("dkc");c.textContent=`${n} / 25`;c.className=n===25?"ok":"ng";
   $("dkm").textContent=TOAST||(D.id===ACT&&!full?"未完成のため、対戦では初期構成のデッキを使います":"");
-  const L=$("dkdk");L.innerHTML="";const mr=document.createElement("div");mr.className="dkmain";mr.appendChild(D.main?cardEl(byN(D.main)):emptyEl("メイン"));L.appendChild(mr);
+  const L=$("dkdk");L.innerHTML="";const mr=document.createElement("div");mr.className="dkmain";mr.appendChild(D.main?cardEl(byN(D.main)):emptyEl("メイン"));
+  {const bb=document.createElement("button");bb.className="dkbk";bb.title="裏面を選ぶ";bb.innerHTML=`${bkHTML(D.bk||"std","bkc")}<span>裏面</span><em>${BKD[D.bk||"std"].name}</em>`;bb.onclick=bkpOpen;mr.appendChild(bb)}
+  L.appendChild(mr);
   const g=document.createElement("div");g.className="dkgrid3";g.style.marginTop="8px";
   for(let i=0;i<12;i++){if(D.k[i]){g.appendChild(cardEl(byN(D.k[i])))}else g.appendChild(emptyEl("＋"))}
   L.appendChild(g);
@@ -68,3 +70,11 @@ $("dkdel").onclick=()=>{if(DKS.length<2)return;const d=DKS.splice(SELD,1)[0];if(
 $("hbD").onclick=()=>{DKRET=0;$("home").classList.remove("on");$("dkb").classList.add("on");SELD=Math.max(0,DKS.findIndex(d=>d.id===ACT));TOAST="";dkRender()};
 $("dkbk").onclick=()=>{if(DKRET){DKRET=0;$("dkb").classList.remove("on");$("dkdt").classList.remove("on");bmatOpen()}else homeOpen()};
 
+
+/* デッキの裏面を選ぶ（所持している裏面から。デッキごとに丸ごと装着・消費しない） */
+const BKP=document.createElement("div");BKP.id="bkp";document.body.append(BKP);
+function bkpRender(){const D=DKS[SELD],cur=D.bk||"std";
+ BKP.innerHTML=`<div class="bkp-in"><div class="bkp-h"><h3>裏面</h3><p>${esc(D.name)} のカードの裏面を選びます。</p><button class="bsb" data-b="x">閉じる</button></div><div class="bkp-g">${Object.keys(BKD).map(id=>{const own=BKO.includes(id);return`<button class="bkp-i${id===cur?" on":""}${own?"":" lk"}" data-b="${id}"${own?"":" disabled"}>${bkHTML(id,"bkc")}<b>${esc(BKD[id].name)}</b><small>${own?(id===cur?"✓ 装着中":esc(BKD[id].desc)):"ショップで入手"}</small></button>`}).join("")}</div></div>`}
+function bkpOpen(){bkpRender();BKP.classList.add("on")}
+BKP.onclick=e=>{const b=e.target.closest("[data-b]");if(!b){if(e.target===BKP)BKP.classList.remove("on");return}pop(b);if(b.dataset.b==="x"){BKP.classList.remove("on");return}
+ if(!BKO.includes(b.dataset.b))return;DKS[SELD].bk=b.dataset.b;dkSave();BKP.classList.remove("on");dkRender()};

@@ -123,7 +123,16 @@ return{
   el.querySelectorAll(":scope>.fxo").forEach(o=>{if(LIO)LIO.unobserve(o);o.remove()})}}})();
 function fxSet(el,ids,n){const sig=ids.join(",")+"|"+(n||"");if((el.dataset.fx||"")===sig)return;el.dataset.fx=sig;FXE.drop(el);if(!ids.length)return;
   if(el.matches(".ib")&&el.querySelector(".cv"))FXE.addIb(el,ids,n);else{el.insertAdjacentHTML("beforeend",fxHTML(ids,n,el.matches(".dkc:not(.hm)")));const o=el.querySelector(":scope>.fxo.lt");if(o&&LIO)LIO.observe(o)}}
-function fxScan(){
+/* カード枠：装着中の枠をカードの上にかぶせる（FXとは別の層。.fro）。pre＝盤面のマスは軽い簡易版 */
+function frSet(el,id,sm){id=id&&FRD[id]?id:"";if((el.dataset.fr||"")===id&&(!id||el.querySelector(":scope>.fro")))return;el.dataset.fr=id;el.querySelectorAll(":scope>.fro").forEach(x=>x.remove());if(id)el.insertAdjacentHTML("beforeend",frHTML(id,sm))}
+function frScan(){
+  document.querySelectorAll(".dkc[data-n]").forEach(el=>frSet(el,frOf(el.dataset.n)));
+  document.querySelectorAll(".hmc[data-n]").forEach(w=>{const e=w.firstElementChild;if(e)frSet(e,frOf(w.dataset.n))});
+  if(typeof S!=="undefined"&&S&&S.hand){
+    document.querySelectorAll("#hand .card[data-h]").forEach(el=>{const c=S.hand[0][+el.dataset.h];frSet(el,c?frOf(c.n):null)});
+    document.querySelectorAll("#board [data-i]").forEach(el=>{const b=S.board[+el.dataset.i];frSet(el,b?(b.o===0?frOf(b.card.n):b.card.fr):null,1)})}
+  document.querySelectorAll(".ib[data-n]").forEach(el=>{const x=el.dataset.xr;frSet(el,x!==undefined?x:frOf(el.dataset.n))})}
+function fxScan(){frScan();
   document.querySelectorAll(".dkc[data-n]").forEach(el=>fxSet(el,eqOf(el.dataset.n),el.dataset.n));
   document.querySelectorAll(".hmc[data-n]").forEach(w=>{const e=w.firstElementChild;if(e)fxSet(e,eqOf(w.dataset.n),w.dataset.n)});
   if(typeof S!=="undefined"&&S&&S.hand){

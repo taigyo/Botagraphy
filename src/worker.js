@@ -94,7 +94,8 @@ export class Lobby extends DurableObject {
 const okItem = (x) =>
   x && typeof x.n === "string" && x.n.length <= 24 && Number.isInteger(x.c) && x.c >= 0 && x.c <= 30 &&
   Number.isInteger(x.cell) && x.cell >= -1 && x.cell < 36 && (x.tg == null || (Number.isInteger(x.tg) && x.tg >= 0 && x.tg < 36)) &&
-  (x.fx == null || (Array.isArray(x.fx) && x.fx.length <= 10 && x.fx.every((f) => typeof f === "string" && f.length <= 20)));
+  (x.fx == null || (Array.isArray(x.fx) && x.fx.length <= 10 && x.fx.every((f) => typeof f === "string" && f.length <= 20))) &&
+  (x.fr == null || (typeof x.fr === "string" && x.fr.length <= 20));
 const LOG_MAX = 600;
 
 export class Room extends DurableObject {
@@ -137,7 +138,7 @@ export class Room extends DurableObject {
   async broadcast() {
     const seats = (await this.ctx.storage.get("seats")) || [null, null];
     const phase = await this.ctx.storage.get("phase");
-    const players = seats.map((p, i) => p && { side: i, name: p.name, icon: p.icon || "", title: p.title || "", deck: p.deck, ready: p.ready, rm: !!p.rm, online: this.live(p.pid).length > 0 });
+    const players = seats.map((p, i) => p && { side: i, name: p.name, icon: p.icon || "", title: p.title || "", bk: p.bk || "", deck: p.deck, ready: p.ready, rm: !!p.rm, online: this.live(p.pid).length > 0 });
     for (const w of this.ctx.getWebSockets()) {
       const a = w.deserializeAttachment() || {};
       if (a.side >= 0) send(w, { t: "state", phase, you: a.side, players });
@@ -157,12 +158,13 @@ export class Room extends DurableObject {
         if (phase !== "lobby") return send(ws, { t: "err", msg: "このルームはすでに対戦中です。" }), ws.close(1000, "busy");
         idx = seats.findIndex((p) => !p);
         if (idx < 0) return send(ws, { t: "err", msg: "このルームは満員です。" }), ws.close(1000, "full");
-        seats[idx] = { pid, name: clean(m.name, 12) || "プレイヤー", icon: cleanIcon(m.icon), title: clean(m.title, 12), deck: clean(m.deck), ready: false };
+        seats[idx] = { pid, name: clean(m.name, 12) || "プレイヤー", icon: cleanIcon(m.icon), title: clean(m.title, 12), bk: clean(m.bk, 16), deck: clean(m.deck), ready: false };
       } else {
         seats[idx].name = clean(m.name, 12) || seats[idx].name;
         seats[idx].deck = clean(m.deck) || seats[idx].deck;
         seats[idx].icon = cleanIcon(m.icon) || seats[idx].icon;
         seats[idx].title = m.title === undefined ? seats[idx].title : clean(m.title, 12);
+        seats[idx].bk = m.bk === undefined ? seats[idx].bk : clean(m.bk, 16);
       }
       for (const w of this.live(pid)) if (w !== ws) { send(w, { t: "err", msg: "別の画面で入室されました。" }); w.close(4001, "replaced"); }
       ws.serializeAttachment({ pid, side: idx });
@@ -210,7 +212,7 @@ export class Room extends DurableObject {
       const plans = (await st.get("plans")) || {};
       const row = plans[turn] || [null, null];
       if (row[me]) return; // 同じターンの再送は無視
-      row[me] = items.map((x) => ({ n: x.n, c: x.c, cell: x.cell, tg: x.tg ?? null, fx: x.fx ?? [] }));
+      row[me] = items.map((x) => ({ n: x.n, c: x.c, cell: x.cell, tg: x.tg ?? null, fx: x.fx ?? [], fr: x.fr ?? null }));
       plans[turn] = row;
       for (const k of Object.keys(plans)) if (+k < turn - 2) delete plans[k];
       await st.put("plans", plans);

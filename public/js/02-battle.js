@@ -17,6 +17,7 @@ function init(){$("pp").classList.remove("on");$("sres").classList.remove("on");
   const win=Math.max(1,Math.min(20,+$("win").value||5));$("win").value=win;
   S={win,max:win*3,turn:0,mana:[0,0],hand:[[],[]],board:Array(36).fill(null),pts:[0,0],st:[],sel:null,over:false,busy:false,log:"",res:"",hide:new Set(),fx:null,jq:[],pop:null,ini:0,nm:[0,0],stk:null,lv:[.5,Math.max(0,Math.min(1,BM.st?BM.st.lv:BM.lv==null?.5:BM.lv))],deck:[myDeck(BM.my||ACT),BM.st?stageDeck(BM.st):BM.cpu==="preset"||!DKS.some(d=>d.id===BM.cpu)?mkDeck("f").filter(c=>c.m!==0):myDeck(BM.cpu)]};
   if(typeof bui==="function")bui();
+  S.deck[1].forEach(c=>{c.fx=[];c.fr=null});/* CPUのカードには自分の枠・エフェクトを出さない */
   const MN=[0,1].map(o=>S.deck[o].find(c=>c.m===1));for(let i=0;i<3;i++){dr(0);dr(1)}
   const s0=S;S.busy=true;mulligan().then(()=>{if(S!==s0)return;const tkf=o=>CARDS.find(c=>c.n===(MN[o]&&MN[o].tk||"牡丹のはなびら"));S.hand[0].push({...tkf(0),nw:Date.now()});S.hand[1].push({...tkf(1)});S.busy=false;next()});
 }
@@ -233,7 +234,10 @@ const info=$("info"),INFO=info,finfo=$("finfo"),IC={f:"#f4a6c0",t:"#8ccf9c"};
 const PF='<svg class="pf" width="242" height="334" viewBox="0 0 242 334"><defs><linearGradient id="pfg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe27a"/><stop offset=".5" stop-color="#fff6c0"/><stop offset="1" stop-color="#f2b020"/></linearGradient></defs><rect x="1.5" y="1.5" width="239" height="331" rx="20" pathLength="1"/></svg>';
 /* 詳細（左：自分側 / 右：相手側）は画面端でなく、盤面のすぐ隣に出す */
 const placeInfo=(el,right)=>{const r=$("board").getBoundingClientRect(),w=232,g=66;el.style.left=(right?Math.min(innerWidth-w-8,r.right+g):Math.max(8,r.left-w-g))+"px";if(right)el.style.right="auto"};
-const showCard=(c,p,F)=>{const info=F?finfo:INFO;if(F){finfo._c=c;finfo._p=p}else clearTimeout(unpin.t);info.classList.remove("un");info.classList.toggle("pin",!F&&PIN===c);info.style.setProperty("--ac",IC[c.d]);info.innerHTML=ibHTML(c,p,false);placeInfo(info,!!F);fitPF(info);info.classList.add("on");tiltKick()};
+const showCard=(c,p,F)=>{const info=F?finfo:INFO;if(F){finfo._c=c;finfo._p=p}else clearTimeout(unpin.t);info.classList.remove("un");info.classList.toggle("pin",!F&&PIN===c);info.style.setProperty("--ac",IC[c.d]);
+  if(info._n===c.n&&info.classList.contains("on")&&info.querySelector(".ib")){const w=info.querySelector(".pwr");if(w){w.className="pwr "+(p>c.p?"up":p<c.p?"dn":"");w.textContent=p==null?"✦":p}}
+  else{info.innerHTML=ibHTML(c,p,false);info._n=c.n;fitPF(info)}
+  placeInfo(info,!!F);info.classList.add("on");tiltKick()};
 function setMana(m){const d=$("drop"),n=$("dn");if(d.dataset.v===String(m))return;const first=d.dataset.v===undefined;d.dataset.v=m;if(first){n.textContent=m;return}
   n.style.opacity=0;setTimeout(()=>{n.textContent=m;n.style.opacity=1;jig(1)},110)}
 ["contextmenu","dragstart","selectstart"].forEach(t=>document.addEventListener(t,e=>{if(!e.target.closest||!e.target.closest("input,select"))e.preventDefault()}));
@@ -266,10 +270,10 @@ function render(){
   const hn=S.hand[0].length,stp=hn>1?Math.min([0,0,142,126,116,108,102,96][hn]||96,780/(hn-1)):0;
   const D=c=>c.c>left()||dis||(isAct(c)&&!actT(0,c).length),prevD=new Set(DIS);DIS.clear();S.hand[0].forEach(c=>{if(D(c))DIS.add(c)});
   $("hand").innerHTML=S.hand[0].map((c,i)=>{const m=i-(hn-1)/2,hx=m*stp,hy=m*m*2.4,hr=m*4,pv=HPOS.get(c),mv=pv&&!(c.nw&&Date.now()-c.nw<1800)&&(Math.abs(pv.x-hx)>.5||Math.abs(pv.y-hy)>.5||Math.abs(pv.r-hr)>.3);HPOS.set(c,{x:hx,y:hy,r:hr});return`<button class="card${ART[c.n]?" ill ac-"+ART[c.n]:""}${mv?" mv":""}${S.sel===i?" on":""}${S.pk&&S.pk.hand&&S.pk.hand.includes(i)?" pk":""}${c.nw&&Date.now()-c.nw<1800?" nw":""}" data-h="${i}" style="${mv?`--x0:${pv.x.toFixed(1)}px;--y0:${pv.y.toFixed(1)}px;--r0:${pv.r.toFixed(1)}deg;`:""}--x:${(m*stp).toFixed(1)}px;--y:${(m*m*2.4).toFixed(1)}px;--r:${(m*4).toFixed(1)}deg;z-index:${i};animation-delay:${(i*.09-(c.nw?(Date.now()-c.nw)/1000:0)).toFixed(2)}s;--ac:${c.d==="f"?"#f4a6c0":"#8ccf9c"}" ${DIS.has(c)?(prevD.has(c)?"data-dis":"data-dis data-fd"):""}><b>${c.c}</b><i class="em">${c.e}</i><em>${c.n}</em><span class="tx"><span>${c.t}</span></span><small>${c.p==null?"✦":c.p}</small></button>`}).join("");
-  {const n=S.turn>0?S.hand[1].length+(S.oPend||0):0,pc=S.ohc||0,T=S.ohT||(S.ohT=[]),P=S.ohP||(S.ohP=[]),stp=n>1?Math.min(52,320/(n-1)):0,now=Date.now();
+  {const OBK=typeof oppBk==="function"?oppBk():"std",n=S.turn>0?S.hand[1].length+(S.oPend||0):0,pc=S.ohc||0,T=S.ohT||(S.ohT=[]),P=S.ohP||(S.ohP=[]),stp=n>1?Math.min(104,640/(n-1)):0,now=Date.now();
     for(let i=pc;i<n;i++)T[i]=now;T.length=n;S.ohc=n;
-    $("oh").innerHTML=Array.from({length:n},(_,i)=>{const m=i-(n-1)/2,x=m*stp,y=-m*m*2.4,r=-m*4,pv=P[i],nf=T[i]&&now-T[i]<1800,mv=pv&&!nf&&(Math.abs(pv.x-x)>.5||Math.abs(pv.y-y)>.5||Math.abs(pv.r-r)>.3);P[i]={x,y,r};
-      return`<i class="oc${nf?" nw":""}${mv?" mv":""}" style="${mv?`--x0:${pv.x.toFixed(1)}px;--y0:${pv.y.toFixed(1)}px;--r0:${pv.r.toFixed(1)}deg;`:""}--x:${x.toFixed(1)}px;--y:${y.toFixed(1)}px;--r:${r.toFixed(1)}deg;z-index:${i};animation-delay:${(i*.09-(nf?(now-T[i])/1000:0)).toFixed(2)}s"></i>`}).join("");P.length=n}
+    $("oh").innerHTML=Array.from({length:n},(_,i)=>{const m=i-(n-1)/2,x=m*stp,y=-m*m*4.8,r=-m*4,pv=P[i],nf=T[i]&&now-T[i]<1800,mv=pv&&!nf&&(Math.abs(pv.x-x)>.5||Math.abs(pv.y-y)>.5||Math.abs(pv.r-r)>.3);P[i]={x,y,r};
+      return bkHTML(OBK,"oc"+(nf?" nw":"")+(mv?" mv":""),`${mv?`--x0:${pv.x.toFixed(1)}px;--y0:${pv.y.toFixed(1)}px;--r0:${pv.r.toFixed(1)}deg;`:""}--x:${x.toFixed(1)}px;--y:${y.toFixed(1)}px;--r:${r.toFixed(1)}deg;z-index:${i};animation-delay:${(i*.09-(nf?(now-T[i])/1000:0)).toFixed(2)}s`)}).join("");P.length=n}
   if(S.fx&&!S.fx.fd){S.fx.fd=1;if(S.fx.k==="drop")windAt(S.fx.cell);else if(S.fx.k==="clash"&&/⚔/.test(S.fx.txt))clashAt(S.fx.cell)}
   $("end").textContent="";
   $("sk0").innerHTML=skh(S.stk?S.stk[0]:S.st,0);$("sk1").innerHTML=skh(S.stk?S.stk[1]:[],1);

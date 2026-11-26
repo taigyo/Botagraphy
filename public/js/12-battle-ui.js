@@ -16,18 +16,29 @@ function whoOpp(){const op=ON.st&&ON.st.players&&ON.st.players[1-NET.you];return
 const plHTML=w=>`<i class="pav${w.icon.startsWith("e:")?" e":""}" style="${avStyle(w.icon)}">${esc(avTxt(w.icon))}</i><span class="ptx"><b>${esc(w.name)}</b>${w.title?`<em>${esc(w.title)}</em>`:""}</span>`;
 function plShow(){[0,1].forEach(o=>{const e=$("pl"+o);if(e&&S.who&&S.who[o])e.innerHTML=plHTML(S.who[o])})}
 /* only1＝相手だけ更新（オンラインで相手の情報が届いたとき） */
+/* 相手の裏面：オンラインは相手が送った装着中の裏面、ソロはCPUの名前から決める（毎回同じ） */
+function oppBk(){if(NET.on){const op=ON.st&&ON.st.players&&ON.st.players[1-NET.you];return op&&BKD[op.bk]?op.bk:"std"}const ks=Object.keys(BKD),n=S&&S.who&&S.who[1]?S.who[1].name:"";let h=0;for(const ch of n)h=(h*31+ch.charCodeAt(0))>>>0;return n?ks[h%ks.length]:"std"}
 function bui(only1){if(!S)return;if(!only1)S.who=[whoMe(),NET.on?whoOpp():whoCpu(S.lv[1])];else S.who[1]=whoOpp();plShow()}
 
 /* ---- ログ画面 ---- */
 const LGW=document.createElement("div");LGW.id="lgw";document.body.append(LGW);
 const LGI={turn:"🌿",put:"🌱",clash:"⚔️",fx:"✨",act:"🎴",rm:"🍂",area:"🏁",pt:"⭐",end:"🏆"};
+let LGN=null;
+const lgNames=()=>LGN||(LGN=new RegExp([...new Set(CARDS.map(c=>c.n))].filter(n=>byN(n)).sort((a,b)=>b.length-a.length).map(escRe).join("|"),"g"));
+/* 本文のカード名にホバー用の印を付ける（相手の名前の中は除く：「クズハ」の「クズ」など） */
+const lgLink=h=>{const op=esc(OPN());return h.split(op).map(s=>s.replace(lgNames(),m=>`<u class="lgc" data-n="${m}">${m}</u>`)).join(op)};
+const LGD=document.createElement("div");LGD.id="lgd";
+const lgdHide=()=>LGD.classList.remove("on");
 function lgHTML(){const L=(S&&S.lg)||[];if(!L.length)return'<p class="lge">まだ何も起きていません</p>';
   const by=[];L.forEach(e=>{let g=by[by.length-1];if(!g||g.t!==e.t){g={t:e.t,r:[]};by.push(g)}if(e.k!=="turn")g.r.push(e)});
-  return by.map(g=>`<section class="lgg"><h4><span>ターン ${g.t}</span></h4>${g.r.map(e=>`<div class="lgr k-${e.k}${e.o===0?" me":e.o===1?" cp":""}"><i class="lgi">${LGI[e.k]||"・"}</i>${e.o===0||e.o===1?`<b class="lgt ${e.o?"cp":"me"}">${esc(OWN(e.o))}</b>`:""}<span class="lgx">${e.h}</span></div>`).join("")}</section>`).join("")}
+  return by.map(g=>`<section class="lgg"><h4><span>ターン ${g.t}</span></h4>${g.r.map(e=>`<div class="lgr k-${e.k}${e.o===0?" me":e.o===1?" cp":""}"><i class="lgi">${LGI[e.k]||"・"}</i>${e.o===0||e.o===1?`<b class="lgt ${e.o?"cp":"me"}">${esc(OWN(e.o))}</b>`:""}<span class="lgx">${lgLink(e.h)}</span></div>`).join("")}</section>`).join("")}
 function lgRender(keep){const b=LGW.querySelector(".lgb");if(!b)return;const st=b.scrollHeight-b.scrollTop-b.clientHeight<48;b.innerHTML=lgHTML();if(!keep||st)b.scrollTop=b.scrollHeight}
 function lgLive(){if(LGW.classList.contains("on"))lgRender(true)}
-function lgOpen(){LGW.innerHTML='<div class="lgp"><div class="lgh"><h3>ログ</h3><button class="lgx0" title="閉じる">✕</button></div><div class="lgb"></div></div>';lgRender();LGW.classList.add("on")}
-const lgClose=()=>LGW.classList.remove("on");
+function lgOpen(){LGW.innerHTML='<div class="lgp"><div class="lgh"><h3>ログ</h3><button class="lgx0" title="閉じる">✕</button></div><div class="lgb"></div></div>';LGW.append(LGD);lgRender();LGW.classList.add("on")}
+const lgClose=()=>{lgdHide();LGW.classList.remove("on")};
+LGW.onmouseover=e=>{const u=e.target.closest&&e.target.closest(".lgc"),c=u&&byN(u.dataset.n);if(!c){lgdHide();return}
+  if(LGD._n!==c.n||!LGD.classList.contains("on")){LGD.style.setProperty("--ac",IC[c.d]);LGD.innerHTML=ibHTML(c,c.p,false);LGD._n=c.n;fitPF(LGD)}LGD.classList.add("on")};
+LGW.onmouseleave=lgdHide;
 LGW.onclick=e=>{if(e.target===LGW||e.target.closest(".lgx0"))lgClose()};
 $("lgb").onclick=lgOpen;
 

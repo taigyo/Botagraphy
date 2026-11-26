@@ -14,12 +14,12 @@ function netSend(d){netOut({t:"relay",s:++NET.os,d})}
 function netPush(k,v){const w=NET.w[k];if(w&&w.length)w.shift()(v);else(NET.q[k]=NET.q[k]||[]).push(v)}
 function netWait(k){if(NET.dead)return new Promise(()=>{});const q=NET.q[k];if(q&&q.length)return Promise.resolve(q.shift());if(++NET.nw===1){NET.nwt=Date.now();NET.wk=k}return new Promise(r=>{(NET.w[k]=NET.w[k]||[]).push(v=>{NET.nw--;r(v)})})}
 async function netPlans(){
-  const turn=S.turn,items=S.st.map(s=>({n:s.card.n,c:s.card.c,cell:s.cell,tg:s.tg===undefined?null:s.tg,fx:eqOf(s.card.n).slice(0,10)}));
+  const turn=S.turn,items=S.st.map(s=>({n:s.card.n,c:s.card.c,cell:s.cell,tg:s.tg===undefined?null:s.tg,fx:eqOf(s.card.n).slice(0,10),fr:frOf(s.card.n)}));
   netOut({t:"plan",turn,items});
   const p=await netWait("plans:"+turn),th=p[1-NET.you]||[],out=[];
   for(const it of th){const base=CARDS.find(c=>c.n===it.n);if(!base)continue;
     const H=S.hand[1];let k=H.findIndex(x=>!x.hid&&x.n===it.n);if(k<0)k=H.findIndex(x=>x.hid);if(k>=0)H.splice(k,1);
-    const r={card:{...base,c:it.c,fx:Array.isArray(it.fx)?it.fx:[]},cell:it.cell};if(it.tg!=null)r.tg=it.tg;out.push(r)}
+    const r={card:{...base,c:it.c,fx:Array.isArray(it.fx)?it.fx:[],fr:typeof it.fr==="string"&&FRD[it.fr]?it.fr:null},cell:it.cell};if(it.tg!=null)r.tg=it.tg;out.push(r)}
   return out;
 }
 function netSum(over){
@@ -55,7 +55,7 @@ function netReconnect(){
   const go=()=>{if(!NET.on||ON.bye||NET.dead){NET.rc=0;return}if(++n>40){NET.rc=0;netBanner("接続できません。ホームに戻ってください。");return}
     netBanner("再接続中…");
     const w=wsOpen("/ws/room/"+ON.room,onRoomMsg,()=>{if(ON.ws===w&&!ON.bye)setTimeout(go,2000)});ON.ws=w;
-    w.onopen=()=>{NET.rc=0;netBanner("");w.send(JSON.stringify({t:"hello",pid:PID,name:PNAME,icon:PROF.icon,title:PROF.title,deck:deckLabel(),ack:NET.ack}));NET.sent.forEach(netFlush)};
+    w.onopen=()=>{NET.rc=0;netBanner("");w.send(JSON.stringify({t:"hello",pid:PID,name:PNAME,icon:PROF.icon,title:PROF.title,bk:deckBk(ON.dk),deck:deckLabel(),ack:NET.ack}));NET.sent.forEach(netFlush)};
   };go();
 }
 
