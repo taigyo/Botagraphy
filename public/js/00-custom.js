@@ -42,3 +42,8 @@ const bkHTML=(id,cls,st)=>{if(!BKD[id])id="std";return`<i class="bk bk-${id} ${b
 const frOf=n=>{const g=GR.cards[n];return g&&g.fr&&FRD[g.fr]&&(g.fo||[]).includes(g.fr)?g.fr:null};
 /* デッキの裏面（持っていないものは標準に戻す） */
 const deckBk=id=>{const d=DKS.find(x=>x.id===id)||DKS.find(x=>x.id===ACT);return d&&d.bk&&BKO.includes(d.bk)?d.bk:"std"};
+/* 二つ名・アイコンの所持（ショップで買うと増える。「なし」と🌱は最初から所持。いま使っているものは 05 で所持扱いにする） */
+const TTO_K="bota_tto_v1",ICO_K="bota_ico_v1";
+let TTO=(()=>{try{const j=JSON.parse(localStorage.getItem(TTO_K)||"[]");return["",...(Array.isArray(j)?j:[]).filter(x=>typeof x==="string"&&x)]}catch{return[""]}})();
+let ICO=(()=>{try{const j=JSON.parse(localStorage.getItem(ICO_K)||"[]");return["e:🌱",...(Array.isArray(j)?j:[]).filter(x=>typeof x==="string"&&x&&x!=="e:🌱")]}catch{return["e:🌱"]}})();
+const ttoSave=()=>{try{localStorage.setItem(TTO_K,JSON.stringify(TTO.filter(Boolean)))}catch{}},icoSave=()=>{try{localStorage.setItem(ICO_K,JSON.stringify(ICO.filter(x=>x!=="e:🌱")))}catch{}};

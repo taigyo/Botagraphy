@@ -29,14 +29,14 @@ function cardEl(c){const d=document.createElement("div");d.className="dkc hc"+(i
 function emptyEl(t){const d=document.createElement("div");d.className="dkc em";d.textContent=t;return d}
 function dkRender(){
   const D=DKS[SELD],T=$("dkt");T.innerHTML="";
-  DKS.forEach((d,i)=>{const b=document.createElement("button");b.className="dktab"+(i===SELD?" on":"");b.innerHTML='<span class="ts"></span><span class="tn"></span>';b.children[0].textContent=d.id===ACT?"★":"";b.children[1].textContent=d.name;b.onclick=()=>{SELD=i;TOAST="";dkRender()};T.appendChild(b)});
+  DKS.forEach((d,i)=>{const b=document.createElement("button");b.className="dktab"+(i===SELD?" on":"");b.innerHTML=bkHTML(d.bk||"std","dkbg")+'<span class="ts"></span><span class="tn"></span>';b.querySelector(".ts").textContent=d.id===ACT?"★":"";b.querySelector(".tn").textContent=d.name;b.onclick=()=>{SELD=i;TOAST="";dkRender()};T.appendChild(b)});
   const nb=document.createElement("button");nb.textContent="＋";nb.className="dktab add";nb.title="新規デッキ";nb.onclick=()=>{DKS.push(dkNew("デッキ"+(DKS.length+1),null,1));SELD=DKS.length-1;TOAST="";dkSave();dkRender()};T.appendChild(nb);
   if(document.activeElement!==$("dkname"))$("dkname").value=D.name;
   const full=dkFull(D);const ak=$("dkact");ak.textContent=D.id===ACT?"★":"☆";ak.classList.toggle("is",D.id===ACT);ak.title=D.id===ACT?"使用中のデッキ":full?"対戦で使う":"25枚そろうと使えます";ak.disabled=!full||D.id===ACT;$("dkdel").disabled=DKS.length<2;
   const n=dkCnt(D),c=$("dkc");c.textContent=`${n} / 25`;c.className=n===25?"ok":"ng";
   $("dkm").textContent=TOAST||(D.id===ACT&&!full?"未完成のため、対戦では初期構成のデッキを使います":"");
   const L=$("dkdk");L.innerHTML="";const mr=document.createElement("div");mr.className="dkmain";mr.appendChild(D.main?cardEl(byN(D.main)):emptyEl("メイン"));
-  {const bb=document.createElement("button");bb.className="dkbk";bb.title="裏面を選ぶ";bb.innerHTML=`${bkHTML(D.bk||"std","bkc")}<span>裏面</span><em>${BKD[D.bk||"std"].name}</em>`;bb.onclick=bkpOpen;mr.appendChild(bb)}
+  {const bb=document.createElement("button");bb.className="dkbk";bb.title="裏面を選ぶ";bb.innerHTML=bkHTML(D.bk||"std","bkc");bb.onclick=bkpOpen;mr.appendChild(bb)}
   L.appendChild(mr);
   const g=document.createElement("div");g.className="dkgrid3";g.style.marginTop="8px";
   for(let i=0;i<12;i++){if(D.k[i]){g.appendChild(cardEl(byN(D.k[i])))}else g.appendChild(emptyEl("＋"))}
@@ -74,7 +74,7 @@ $("dkbk").onclick=()=>{if(DKRET){DKRET=0;$("dkb").classList.remove("on");$("dkdt
 /* デッキの裏面を選ぶ（所持している裏面から。デッキごとに丸ごと装着・消費しない） */
 const BKP=document.createElement("div");BKP.id="bkp";document.body.append(BKP);
 function bkpRender(){const D=DKS[SELD],cur=D.bk||"std";
- BKP.innerHTML=`<div class="bkp-in"><div class="bkp-h"><h3>裏面</h3><p>${esc(D.name)} のカードの裏面を選びます。</p><button class="bsb" data-b="x">閉じる</button></div><div class="bkp-g">${Object.keys(BKD).map(id=>{const own=BKO.includes(id);return`<button class="bkp-i${id===cur?" on":""}${own?"":" lk"}" data-b="${id}"${own?"":" disabled"}>${bkHTML(id,"bkc")}<b>${esc(BKD[id].name)}</b><small>${own?(id===cur?"✓ 装着中":esc(BKD[id].desc)):"ショップで入手"}</small></button>`}).join("")}</div></div>`}
+ BKP.innerHTML=`<div class="bkp-in"><div class="bkp-h"><h3>裏面</h3><p>${esc(D.name)} のカードの裏面を選びます。</p><button class="bsb" data-b="x">閉じる</button></div><div class="bkp-g">${Object.keys(BKD).filter(id=>BKO.includes(id)).map(id=>`<button class="bkp-i${id===cur?" on":""}" data-b="${id}">${bkHTML(id,"bkc")}<b>${esc(BKD[id].name)}</b><small>${id===cur?"✓ 装着中":esc(BKD[id].desc)}</small></button>`).join("")}</div></div>`}
 function bkpOpen(){bkpRender();BKP.classList.add("on")}
 BKP.onclick=e=>{const b=e.target.closest("[data-b]");if(!b){if(e.target===BKP)BKP.classList.remove("on");return}pop(b);if(b.dataset.b==="x"){BKP.classList.remove("on");return}
  if(!BKO.includes(b.dataset.b))return;DKS[SELD].bk=b.dataset.b;dkSave();BKP.classList.remove("on");dkRender()};

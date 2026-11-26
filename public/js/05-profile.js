@@ -6,6 +6,8 @@ const PROF_K="bota_prof_v1",EPI=["芽吹きの園丁","深緑の守り人","花�
 let PROF=(()=>{let j={};try{j=JSON.parse(localStorage.getItem(PROF_K)||"{}")||{}}catch{}const old=(localStorage.getItem(NMK)||"").slice(0,12),ok=/^(c:(\w\w)|e:.+)$/.exec(j.icon||"");
  return{icon:ok&&(ok[2]?!!ART_N[ok[2]]:true)?j.icon:"e:🌱",name:(typeof j.name==="string"?j.name:old).trim().slice(0,12)||"プレイヤー",title:EPI.includes(j.title)?j.title:""}})();
 const profSave=()=>{try{localStorage.setItem(PROF_K,JSON.stringify(PROF));localStorage.setItem(NMK,PROF.name)}catch{}};
+/* いま使っているアイコン・二つ名は所持扱い（ショップ制になる前から使っていた人のため） */
+if(!ICO.includes(PROF.icon)){ICO.push(PROF.icon);icoSave()}if(PROF.title&&!TTO.includes(PROF.title)){TTO.push(PROF.title);ttoSave()}
 const avStyle=ic=>ic.startsWith("c:")?`background:var(--i-${ic.slice(2)}) center/cover no-repeat`:"",avTxt=ic=>ic.startsWith("e:")?ic.slice(2):"";
 function profShow(){const h=$("hprof");if(!h)return;const av=h.querySelector(".av");av.style.cssText=avStyle(PROF.icon);av.textContent=avTxt(PROF.icon);av.classList.toggle("e",PROF.icon.startsWith("e:"));
  h.querySelector(".tx b").textContent=PROF.name;const t=h.querySelector(".tx span");t.textContent=PROF.title;t.style.display=PROF.title?"":"none"}
@@ -31,12 +33,12 @@ function bsetClose(){$("bset").classList.remove("on");homeOpen()}
 const PS=document.createElement("div");PS.id="pset";document.body.append(PS);
 function psOpen(){$("home").classList.remove("on");PS.innerHTML=`<div class="waves"><i></i><i></i><i></i><i></i><i></i></div><header><button id="psbk" class="bsb">← 戻る</button><h2>設定</h2><span></span></header><div class="psb">
  <div class="pssec"><div class="pprev"><div class="av"></div><div class="tx"><b></b><span></span></div></div></div>
- <div class="pssec"><h3>アイコン</h3><div class="picons">${ICON_E.map(e=>`<button class="pic e" data-ic="e:${e}">${e}</button>`).join("")}${Object.keys(ART_N).map(k=>`<button class="pic" data-ic="c:${k}" title="${esc(ART_N[k])}" style="background:var(--i-${k}) center/cover no-repeat"></button>`).join("")}</div></div>
+ <div class="pssec"><h3>アイコン</h3><div class="picons">${ICON_E.filter(e=>ICO.includes("e:"+e)).map(e=>`<button class="pic e" data-ic="e:${e}">${e}</button>`).join("")}${Object.keys(ART_N).filter(k=>ICO.includes("c:"+k)).map(k=>`<button class="pic" data-ic="c:${k}" title="${esc(ART_N[k])}" style="background:var(--i-${k}) center/cover no-repeat"></button>`).join("")}</div></div>
  <div class="pssec"><h3>名前</h3><input id="psnm" maxlength="12" autocomplete="off" placeholder="プレイヤー"></div>
- <div class="pssec"><h3>称号</h3><div class="pepis"><button class="pep" data-ep="">なし</button>${EPI.map(t=>`<button class="pep" data-ep="${esc(t)}">${esc(t)}</button>`).join("")}</div></div></div>`;
+ <div class="pssec"><h3>二つ名</h3><div class="pepis"><button class="pep" data-ep="">なし</button>${EPI.filter(t=>TTO.includes(t)).map(t=>`<button class="pep" data-ep="${esc(t)}">${esc(t)}</button>`).join("")}</div></div><p class="pshint">アイコンと二つ名は、ショップで手に入れると増えます。</p></div>`;
  $("psnm").value=PROF.name;PS.classList.add("on");psSync()}
 function psSync(){const p=PS.querySelector(".pprev .av");p.style.cssText=avStyle(PROF.icon);p.textContent=avTxt(PROF.icon);p.classList.toggle("e",PROF.icon.startsWith("e:"));
- PS.querySelector(".pprev .tx b").textContent=PROF.name;const t=PS.querySelector(".pprev .tx span");t.textContent=PROF.title||"称号なし";t.classList.toggle("none",!PROF.title);
+ PS.querySelector(".pprev .tx b").textContent=PROF.name;const t=PS.querySelector(".pprev .tx span");t.textContent=PROF.title||"二つ名なし";t.classList.toggle("none",!PROF.title);
  PS.querySelectorAll(".pic").forEach(b=>b.classList.toggle("on",b.dataset.ic===PROF.icon));PS.querySelectorAll(".pep").forEach(b=>b.classList.toggle("on",b.dataset.ep===PROF.title))}
 PS.onclick=e=>{const b=e.target.closest("button");if(!b)return;if(b.id==="psbk"){PS.classList.remove("on");homeOpen();return}
  if(b.dataset.ic){PROF.icon=b.dataset.ic;profSave();profShow();psSync()}else if(b.dataset.ep!==undefined){PROF.title=b.dataset.ep;profSave();profShow();psSync()}};

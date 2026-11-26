@@ -102,9 +102,6 @@ def frame_css():
 .fro>i.b{display:var(--bd,none);background:conic-gradient(from var(--a),transparent 0 62%,var(--sh,#fff) 80%,transparent 92%);-webkit-mask:var(--m) 0 0/100% 100% no-repeat;mask:var(--m) 0 0/100% 100% no-repeat;animation:frs var(--p,6s) linear infinite;animation-delay:var(--dl,0s)}
 .fro>i.c{display:var(--cd,none);background:var(--go,#fff);-webkit-mask:var(--mo,none) 0 0/100% 100% no-repeat;mask:var(--mo,none) 0 0/100% 100% no-repeat;animation:var(--ca,none) 4s ease-in-out infinite;animation-delay:var(--dl,0s)}
 .fro>i.d{display:var(--dd,none);box-shadow:inset 0 0 12px 1px var(--gl,#fff6);animation:var(--da,frp) var(--pd,4s) ease-in-out infinite;animation-delay:var(--dl,0s)}
-.fro.sm>i.a,.fro.sm>i.b{padding:4px;box-sizing:border-box;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
-.fro.sm>i.c{display:none}.fro.sm>i.d{box-shadow:inset 0 0 5px 0 var(--gl,#fff6)}
-.fro.sm{z-index:1;border-radius:0}
 """]
     for x in FRAMES:
         v = [f"--m:{x['m']}", f"--g:{x['g']}"]
