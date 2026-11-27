@@ -19,7 +19,7 @@ function init(){$("pp").classList.remove("on");$("sres").classList.remove("on");
   if(typeof bui==="function")bui();
   S.deck[1].forEach(c=>{c.fx=[];c.fr=null});/* CPUのカードには自分の枠・エフェクトを出さない */
   const MN=[0,1].map(o=>S.deck[o].find(c=>c.m===1));for(let i=0;i<3;i++){dr(0);dr(1)}
-  const s0=S;S.busy=true;mulligan().then(()=>{if(S!==s0)return;const tkf=o=>CARDS.find(c=>c.n===(MN[o]&&MN[o].tk||"牡丹のはなびら"));S.hand[0].push({...tkf(0),nw:Date.now()});S.hand[1].push({...tkf(1)});S.busy=false;next()});
+  const s0=S;S.busy=true;(typeof vsScreen==="function"?vsScreen():Promise.resolve()).then(mulligan).then(()=>{if(S!==s0)return;const tkf=o=>CARDS.find(c=>c.n===(MN[o]&&MN[o].tk||"牡丹のはなびら"));S.hand[0].push({...tkf(0),nw:Date.now()});S.hand[1].push({...tkf(1)});S.busy=false;next()});
 }
 async function next(){
   const s0=S;S.busy=true;S.turn++;LG("turn",-1,"");banner(S.turn);const g=S.turn>=4?3:2;S.mana[0]+=g+S.nm[0];S.mana[1]+=g+S.nm[1];S.nm=[0,0];
@@ -273,7 +273,7 @@ function render(){
   {const OBK=typeof oppBk==="function"?oppBk():"std",n=S.turn>0?S.hand[1].length+(S.oPend||0):0,pc=S.ohc||0,T=S.ohT||(S.ohT=[]),P=S.ohP||(S.ohP=[]),stp=n>1?Math.min(104,640/(n-1)):0,now=Date.now();
     for(let i=pc;i<n;i++)T[i]=now;T.length=n;S.ohc=n;
     $("oh").innerHTML=Array.from({length:n},(_,i)=>{const m=i-(n-1)/2,x=m*stp,y=-m*m*4.8,r=-m*4,pv=P[i],nf=T[i]&&now-T[i]<1800,mv=pv&&!nf&&(Math.abs(pv.x-x)>.5||Math.abs(pv.y-y)>.5||Math.abs(pv.r-r)>.3);P[i]={x,y,r};
-      return bkHTML(OBK,"oc"+(nf?" nw":"")+(mv?" mv":""),`${mv?`--x0:${pv.x.toFixed(1)}px;--y0:${pv.y.toFixed(1)}px;--r0:${pv.r.toFixed(1)}deg;`:""}--x:${x.toFixed(1)}px;--y:${y.toFixed(1)}px;--r:${r.toFixed(1)}deg;z-index:${i};animation-delay:${(i*.09-(nf?(now-T[i])/1000:0)).toFixed(2)}s`)}).join("");P.length=n}
+      return bkHTML(OBK,"oc flip"+(nf?" nw":"")+(mv?" mv":""),`${mv?`--x0:${pv.x.toFixed(1)}px;--y0:${pv.y.toFixed(1)}px;--r0:${pv.r.toFixed(1)}deg;`:""}--x:${x.toFixed(1)}px;--y:${y.toFixed(1)}px;--r:${r.toFixed(1)}deg;z-index:${i};animation-delay:${(i*.09-(nf?(now-T[i])/1000:0)).toFixed(2)}s`)}).join("");P.length=n}
   if(S.fx&&!S.fx.fd){S.fx.fd=1;if(S.fx.k==="drop")windAt(S.fx.cell);else if(S.fx.k==="clash"&&/⚔/.test(S.fx.txt))clashAt(S.fx.cell)}
   $("end").textContent="";
   $("sk0").innerHTML=skh(S.stk?S.stk[0]:S.st,0);$("sk1").innerHTML=skh(S.stk?S.stk[1]:[],1);

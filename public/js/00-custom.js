@@ -37,7 +37,7 @@ const friTotal=()=>Object.values(FRI).reduce((a,b)=>a+b,0);
 const frClock=()=>"--dl:-"+((performance.now()/1000)%60).toFixed(2)+"s";
 const frHTML=(id,sm)=>`<span class="fro fr-${id}${sm?" sm":""}" style="${frClock()}"><i class="a"></i><i class="b"></i><i class="c"></i><i class="d"></i></span>`;
 const bkCls=id=>({std:"",moss:"a-drift",fubuki:"a-drift",hoshi:"a-twinkle",karakusa:"a-sweep",seigaiha:"a-drift",asanoha:"a-sweep",kyokko:"a-hue",washi:"a-pulse",kagaribi:"a-pulse",hyouka:"a-twinkle",sumi:"a-spin"})[id]||"";
-const bkHTML=(id,cls,st)=>{if(!BKD[id])id="std";return`<i class="bk bk-${id} ${bkCls(id)} ${cls||""}" style="${frClock()};${st||""}"><i class="p"></i><i class="r"></i><i class="e"></i><i class="s"></i></i>`};
+const bkHTML=(id,cls,st)=>{if(!BKD[id])id="std";return`<i class="bk bk-${id} ${bkCls(id)} ${cls||""}" style="${frClock()};${st||""}">${/\bflip\b/.test(cls||"")?'<i class="g"></i>':""}<i class="p"></i><i class="r"></i><i class="e"></i><i class="s"></i></i>`};
 /* カードごとの装着中の枠（成長データ GR は 07 で定義。実行時にだけ参照する） */
 const frOf=n=>{const g=GR.cards[n];return g&&g.fr&&FRD[g.fr]&&(g.fo||[]).includes(g.fr)?g.fr:null};
 /* デッキの裏面（持っていないものは標準に戻す） */

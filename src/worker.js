@@ -221,6 +221,7 @@ export class Room extends DurableObject {
     } else if (m.t === "deck" && phase === "lobby") {
       // 対戦設定：使うデッキの変更（名前だけ。中身は送らない）。変更したら自分の準備OKは外れる
       seats[me].deck = clean(m.deck);
+      if (m.bk !== undefined) seats[me].bk = clean(m.bk, 16);
       seats[me].ready = false;
       await st.put("seats", seats);
       await this.broadcast();

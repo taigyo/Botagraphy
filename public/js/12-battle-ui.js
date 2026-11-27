@@ -20,6 +20,14 @@ function plShow(){[0,1].forEach(o=>{const e=$("pl"+o);if(e&&S.who&&S.who[o])e.in
 function oppBk(){if(NET.on){const op=ON.st&&ON.st.players&&ON.st.players[1-NET.you];return op&&BKD[op.bk]?op.bk:"std"}const ks=Object.keys(BKD),n=S&&S.who&&S.who[1]?S.who[1].name:"";let h=0;for(const ch of n)h=(h*31+ch.charCodeAt(0))>>>0;return n?ks[h%ks.length]:"std"}
 function bui(only1){if(!S)return;if(!only1)S.who=[whoMe(),NET.on?whoOpp():whoCpu(S.lv[1])];else S.who[1]=whoOpp();plShow()}
 
+/* ---- VS画面：バトル開始時、マリガンの前に互いのプレイヤー情報を数秒見せる（タップで早送り）。S.who は bui() が先に作る ---- */
+function vsScreen(){return new Promise(res=>{const w=S&&S.who;if(!w||!w[0]||!w[1]){res();return}
+  const old=$("vs");if(old)old.remove();const el=document.createElement("div");el.id="vs";
+  const side=(p,c,tag)=>`<div class="vsp ${c}"><span class="vst">${tag}</span><i class="vsav${p.icon.startsWith("e:")?" e":""}" style="${avStyle(p.icon)}">${esc(avTxt(p.icon))}</i><b>${esc(p.name)}</b><em>${p.title?esc(p.title):"&nbsp;"}</em></div>`;
+  el.innerHTML=`<div class="vsbg"></div>${side(w[0],"l","あなた")}<div class="vsv"><span>VS</span></div>${side(w[1],"r","対戦相手")}`;document.body.appendChild(el);
+  const t0=Date.now();let done=0;const end=()=>{if(done)return;done=1;el.classList.add("out");setTimeout(()=>{el.remove();res()},450)};
+  setTimeout(end,3200);el.onclick=()=>{if(Date.now()-t0>1000)end()}})}
+
 /* ---- ログ画面 ---- */
 const LGW=document.createElement("div");LGW.id="lgw";document.body.append(LGW);
 const LGI={turn:"🌿",put:"🌱",clash:"⚔️",fx:"✨",act:"🎴",rm:"🍂",area:"🏁",pt:"⭐",end:"🏆"};

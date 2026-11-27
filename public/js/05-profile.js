@@ -49,7 +49,7 @@ $("hpset").onclick=psOpen;profShow();coinShow();
 function soloStart(){NET.on=false;document.body.classList.remove("net");$("bset").classList.remove("on");$("bmat").classList.remove("on");$("home").classList.remove("on");started=true;init()}
 $("hbB").onclick=bsetOpen;
 $("bsbk").onclick=()=>{if(bsFl)bsFlip(false);else bsetClose()};
-$("bsc1").onclick=()=>{pop($("bsc1"));if(!bsFl)setTimeout(()=>bmatOpen(soloTab()),260);else bmatOpen("random")};
+$("bsc1").onclick=()=>{pop($("bsc1"));if(!bsFl)setTimeout(()=>bmatOpen(soloTab()),260);else onlRandomDirect()};
 $("bsc2").onclick=()=>{pop($("bsc2"));if(!bsFl)bsFlip(true);else bmatOpen("room")};
 
 /* ---- 対戦設定：デッキ選択（ソロ・ランダム・ルーム共通）。自分のデッキ／ソロはCPUのデッキも選べる ---- */
@@ -109,15 +109,19 @@ function onRoomMsg(m){
 function connectRoom(code,via,onfail){
   ON.via=via;ON.room=code;ON.st=null;ON.go=null;ON.log=[];ON.bye=0;ON.onfail=onfail;NET.ack=0;NET.on=false;
   const w=wsOpen("/ws/room/"+code,onRoomMsg,o=>{if(ON.ws!==w||ON.bye)return;if(NET.on)netReconnect();else errView(o?"接続が切れました。":"サーバーに接続できませんでした。")});
-  ON.ws=w;w.onopen=()=>w.send(JSON.stringify({t:"hello",pid:PID,name:PNAME,icon:PROF.icon,title:PROF.title,deck:deckLabel(),ack:0}));
+  ON.ws=w;w.onopen=()=>w.send(JSON.stringify({t:"hello",pid:PID,name:PNAME,icon:PROF.icon,title:PROF.title,bk:deckBk(ON.dk),deck:deckLabel(),ack:0}));
 }
 const slot=(p,me)=>`<div class="osl${p?" on":""}${me?" me":""}"><b>${me?"あなた":"相手"}</b><span>${p?esc(p.name):"待機中…"}</span><em>${p?esc(p.deck||"")+(p.online===false?"（切断中）":""):"&nbsp;"}</em><i>${p&&p.ready?"✔ 準備OK":""}</i></div>`;
+/* ランダムマッチ：対戦設定は出さない。使うデッキは★の使用中デッキ。見つかったら自動で準備OKにして、そのまま対戦へ */
+function onlRandomDirect(){BM.mode="random";BM.my=(DKS.find(d=>d.id===ACT&&bmFull(d))||DKS.find(bmFull)||{}).id||null;if(BM.my){ACT=BM.my;dkSave()}ON.dk=BM.my;onlRandom()}
 function lobbyView(){const s=ON.st;if(!s)return;const me=s.players[s.you],op=s.players[1-s.you],both=!!(me&&op),room=ON.via!=="random";
+  if(!room){if(me&&me.deck!==deckLabel())wsSend({t:"deck",deck:deckLabel(),bk:deckBk(ON.dk)});else if(both&&me&&!me.ready)wsSend({t:"ready",v:true});
+    onlShow(`<h3>対戦相手が見つかりました</h3><div class="osp"><i></i><i></i><i></i></div><p class="os">${esc(op?op.name:"")}</p><div class="orow"><button class="obtn sub" data-a="leave">キャンセル</button></div>`);return}
   const ds=DKS.filter(dkFull),cur=ON.dk&&ds.some(d=>d.id===ON.dk)?ON.dk:(ds.some(d=>d.id===ACT)?ACT:(ds[0]?ds[0].id:""));ON.dk=cur;
   const sel=ds.length?`<select id="odsel">${ds.map(d=>`<option value="${esc(d.id)}"${d.id===cur?" selected":""}>${esc(d.name)}</option>`).join("")}</select>`:`<span class="os">花デッキ（初期構成）</span>`;
   onlShow(`<h3>対戦設定</h3><div class="ocode">${esc(ON.room)}${room?`<button class="obtn sub mini" data-a="copy">コピー</button><button class="obtn sub mini" data-a="link">招待リンク</button>`:""}</div><div class="osls">${slot(me,1)}${slot(op,0)}</div><div class="odk"><label>使うデッキ</label>${sel}</div><p class="os">${both?"デッキを選んで、準備OKを押してください":"相手の参加を待っています…"}</p><div class="orow"><button class="obtn" data-a="ready" ${both?"":"disabled"}>${me&&me.ready?"準備を取り消す":"準備OK"}</button><button class="obtn sub" data-a="leave">退室</button></div>`);
-  const e=$("odsel");if(e)e.onchange=()=>{ON.dk=e.value;wsSend({t:"deck",deck:deckLabel()})};
-  if(me&&me.deck!==deckLabel())wsSend({t:"deck",deck:deckLabel()});
+  const e=$("odsel");if(e)e.onchange=()=>{ON.dk=e.value;wsSend({t:"deck",deck:deckLabel(),bk:deckBk(ON.dk)})};
+  if(me&&me.deck!==deckLabel())wsSend({t:"deck",deck:deckLabel(),bk:deckBk(ON.dk)});
 }
 function startView(){const g=ON.go;if(!g)return;const s=ON.st,op=s&&s.players[1-g.you];
   onlShow(`<h3>対戦の準備ができました</h3><p>${esc(PNAME)} <b>VS</b> ${esc(op?op.name:"相手")}</p><p class="os">先攻：${g.first===g.you?"あなた":"相手"}　／　シード：${g.seed}</p><p class="os">対戦の同期は次のステップで実装します。いまは通信テストができます。</p><div class="orow"><button class="obtn" data-a="hi">👋 あいさつを送る</button><button class="obtn sub" data-a="leave">退室</button></div><p class="os" id="olog">${ON.log.slice(-3).join("<br>")}</p>`)}

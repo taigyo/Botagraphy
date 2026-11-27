@@ -46,7 +46,7 @@ function initOnline(g){
   if(typeof bui==="function")bui();
   const MN0=S.deck[0].find(c=>c.m===1);for(let i=0;i<3;i++){dr(0);dr(1)}
   const s0=S;S.busy=true;
-  mulligan().then(async()=>{if(S!==s0)return;const tk=CARDS.find(c=>c.n===(MN0&&MN0.tk||"牡丹のはなびら"));S.hand[0].push({...tk,nw:Date.now()});S.hand[1].push(PH());render();netSend({k:"mull"});await netWait("mull");if(S!==s0)return;S.busy=false;next()});
+  (typeof vsScreen==="function"?vsScreen():Promise.resolve()).then(mulligan).then(async()=>{if(S!==s0)return;const tk=CARDS.find(c=>c.n===(MN0&&MN0.tk||"牡丹のはなびら"));S.hand[0].push({...tk,nw:Date.now()});S.hand[1].push(PH());render();netSend({k:"mull"});await netWait("mull");if(S!==s0)return;S.busy=false;next()});
 }
 function netForfeitWin(msg){if(!NET.on||NET.dead||!S||S.over)return;NET.oppGone=1;NET.dead=true;LG("end",-1,msg+"（不戦勝）");forceEnd("あなたの勝ち",msg+"（不戦勝）");netBanner("")}
 function netLeave(){if(NET.on){netFlush({t:"leave"})}NE.style.display="none";NE.dataset.on="";NET.on=false;NET.dead=true;ON.bye=1;try{ON.ws&&ON.ws.close()}catch{}ON.ws=null;document.body.classList.remove("net");netBanner("")}
