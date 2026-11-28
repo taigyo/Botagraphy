@@ -25,7 +25,7 @@ function vsScreen(){return new Promise(res=>{const w=S&&S.who;if(!w||!w[0]||!w[1
   const old=$("vs");if(old)old.remove();const el=document.createElement("div");el.id="vs";
   const side=(p,c,tag)=>`<div class="vsp ${c}"><span class="vst">${tag}</span><i class="vsav${p.icon.startsWith("e:")?" e":""}" style="${avStyle(p.icon)}">${esc(avTxt(p.icon))}</i><b>${esc(p.name)}</b><em>${p.title?esc(p.title):"&nbsp;"}</em></div>`;
   el.innerHTML=`<div class="vsbg"></div>${side(w[0],"l","あなた")}<div class="vsv"><span>VS</span></div>${side(w[1],"r","対戦相手")}`;document.body.appendChild(el);
-  const t0=Date.now();let done=0;const end=()=>{if(done)return;done=1;el.classList.add("out");setTimeout(()=>{el.remove();res()},450)};
+  const t0=Date.now();let done=0;const end=()=>{if(done)return;done=1;res();/* マリガン画面が出てから消す */setTimeout(()=>{el.classList.add("out");setTimeout(()=>el.remove(),450)},60)};
   setTimeout(end,3200);el.onclick=()=>{if(Date.now()-t0>1000)end()}})}
 
 /* ---- ログ画面 ---- */

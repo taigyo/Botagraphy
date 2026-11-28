@@ -85,13 +85,13 @@ const SH=document.createElement("div");SH.id="shop";document.body.append(SH);let
 const SHT_N={fx:"エフェクト",fr:"カード枠",bk:"カード裏面",ic:"アイコン",ti:"二つ名"};
 const shopOwned=it=>it.t==="bk"?BKO.includes(it.id):it.t==="ic"?ICO.includes(it.id):it.t==="ti"?TTO.includes(it.id):false;
 function shopInfo(it){if(it.t==="fx"){const d=FXG[it.id];return{n:d.name,d:d.desc}}if(it.t==="fr"||it.t==="bk"){const d=(it.t==="fr"?FRD:BKD)[it.id];return{n:d.name,d:d.desc}}
- if(it.t==="ic")return{n:it.id[0]==="e"?"絵文字アイコン":(ART_N[it.id.slice(2)]||"")+"のイラスト",d:"プロフィールのアイコンになります"};return{n:it.id,d:"プロフィールの二つ名になります"}}
+ if(it.t==="ic")return{n:it.id[0]==="e"?"絵文字アイコン":(ART_N[it.id.slice(2)]||"")+"のイラスト",d:""};return{n:it.id,d:""}}
 function shopPv(it){if(it.t==="fx")return`<div class="sp-pv">${fxHTML([it.id],"")}</div>`;
  if(it.t==="fr")return`<div class="sp-pv cardpv"><div class="pvf"><i>🌱</i>${frHTML(it.id)}</div></div>`;
  if(it.t==="bk")return`<div class="sp-pv cardpv">${bkHTML(it.id,"pvb")}</div>`;
  return`<i class="spav${it.id[0]==="e"?" e":""}" style="${avStyle(it.id)}">${esc(avTxt(it.id))}</i>`}
 function shopCard(it){const d=shopInfo(it),own=shopOwned(it),sold=SHOP.sold.includes(it.k)||own,ok=COIN>=it.price,have=it.t==="fx"?INV[it.id]||0:it.t==="fr"?FRI[it.id]||0:0;
- return`<div class="spc t-${it.t}${sold?" sold":""}${it.k===SHN?" got":""}">${it.t==="ti"?"":`<div class="spv">${shopPv(it)}</div>`}<div class="spi"><b class="nm">${esc(d.n)}</b><p>${esc(d.d)}${have?`　<em class="own">所持 ${have}</em>`:""}</p></div><button class="shbuy" data-s="buy" data-k="${it.k}"${sold||!ok?" disabled":""}>${sold?(own?"所持済み":"売り切れ"):`<i class="coin s">B</i>${it.price}`}</button></div>`}
+ return`<div class="spc t-${it.t}${sold?" sold":""}${it.k===SHN?" got":""}">${it.t==="ti"?"":`<div class="spv">${shopPv(it)}</div>`}<div class="spi"><b class="nm">${esc(d.n)}</b>${d.d||have?`<p>${esc(d.d)}${have?`　<em class="own">所持 ${have}</em>`:""}</p>`:""}</div><button class="shbuy" data-s="buy" data-k="${it.k}"${sold||!ok?" disabled":""}>${sold?(own?"所持済み":"売り切れ"):`<i class="coin s">B</i>${it.price}`}</button></div>`}
 function shopRender(){const key=shopSync(),L=shopLineup(key);
  SH.innerHTML=`<div class="waves"><i></i><i></i><i></i><i></i><i></i></div><header><span class="shl"><button class="bsb" data-s="back">← 戻る</button><button class="bsb tst" data-s="refresh">商品更新（テスト）</button></span><h2>ショップ</h2><div class="shcb cbadge"><i class="coin">B</i><b class="cb-n">${COIN}</b><span>ボタコイン</span></div></header>
  <div class="shb">${SHOP_ORDER.map(x=>`<section class="shsec t-${x}"><h4>${SHT_N[x]}</h4><div class="shr">${L.filter(i=>i.t===x).map(shopCard).join("")}</div></section>`).join("")}
@@ -102,10 +102,19 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden&&SH.classL
 SH.onclick=e=>{const b=e.target.closest("button");if(!b||b.disabled)return;
  if(b.dataset.s==="back"){SH.classList.remove("on");clearTimeout(SHT);homeOpen()}
  else if(b.dataset.s==="refresh"){SHOP.n=(SHOP.n||0)+1;SHOP.sold=[];shopSave();shopRender()}
- else if(b.dataset.s==="buy"){const k=b.dataset.k,it=shopLineup(shopSync()).find(x=>x.k===k);if(!it||SHOP.sold.includes(k)||COIN<it.price||shopOwned(it))return;
-  COIN-=it.price;coinSave();
-  if(it.t==="fx"){INV[it.id]=(INV[it.id]||0)+1;invSave()}else if(it.t==="fr"){FRI[it.id]=(FRI[it.id]||0)+1;friSave()}else if(it.t==="bk"){BKO.push(it.id);bkoSave()}else if(it.t==="ic"){ICO.push(it.id);icoSave()}else{TTO.push(it.id);ttoSave()}
-  SHOP.sold.push(k);shopSave();SHN=k;shopRender();toast(`「${esc(shopInfo(it).n)}」を手に入れた`)}};
+ else if(b.dataset.s==="buy"){const it=shopLineup(shopSync()).find(x=>x.k===b.dataset.k);if(!it||SHOP.sold.includes(it.k)||COIN<it.price||shopOwned(it))return;shopConfirm(it)}};
+/* 購入の確認ウインドウ → 買ったら「○○ GET!」を約2秒 */
+const SHC=document.createElement("div");SHC.id="shcf";document.body.append(SHC);let SHCT=0;
+const shcPv=it=>it.t==="ti"?"":`<div class="shcpv">${shopPv(it)}</div>`;
+function shopConfirm(it){const d=shopInfo(it);clearTimeout(SHCT);SHC.className="on";
+ SHC.innerHTML=`<div class="shcw"><h3>購入の確認</h3>${shcPv(it)}<b class="shcn">${esc(d.n)}</b><span class="shcc">${esc(SHT_N[it.t])}</span>${d.d?`<p>${esc(d.d)}</p>`:""}<p class="shcp"><i class="coin s">B</i>${it.price}<small>　所持 ${COIN}</small></p><div class="shcb2"><button class="bsb" data-s="no">やめる</button><button class="shbuy" data-s="yes" data-k="${it.k}">購入する</button></div></div>`}
+function shopGet(it){clearTimeout(SHCT);SHC.className="on g";SHC.innerHTML=`<div class="shcw get">${shcPv(it)}<b class="shcn">${esc(shopInfo(it).n)}</b><span class="shcg">GET!</span></div>`;SHCT=setTimeout(()=>{SHC.className=""},2000)}
+SHC.onclick=e=>{const b=e.target.closest("[data-s]");if(SHC.classList.contains("g")){clearTimeout(SHCT);SHC.className="";return}
+ if(!b){if(e.target===SHC)SHC.className="";return}pop(b);if(b.dataset.s==="no"){SHC.className="";return}
+ if(b.dataset.s!=="yes")return;const k=b.dataset.k,it=shopLineup(shopSync()).find(x=>x.k===k);if(!it||SHOP.sold.includes(k)||COIN<it.price||shopOwned(it)){SHC.className="";return}
+ COIN-=it.price;coinSave();
+ if(it.t==="fx"){INV[it.id]=(INV[it.id]||0)+1;invSave()}else if(it.t==="fr"){FRI[it.id]=(FRI[it.id]||0)+1;friSave()}else if(it.t==="bk"){BKO.push(it.id);bkoSave()}else if(it.t==="ic"){ICO.push(it.id);icoSave()}else{TTO.push(it.id);ttoSave()}
+ SHOP.sold.push(k);shopSave();SHN=k;shopRender();shopGet(it)};
 $("hbS").onclick=shopOpen;
 
 const fxR=(i,k)=>{const x=Math.sin(i*127.1+k*311.7)*43758.5453;return x-Math.floor(x)},fxX=(s,k)=>(6+fxR(s,k+500)*88).toFixed(1),
